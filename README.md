@@ -20,7 +20,7 @@ helm repo add cnpg oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
 helm install cnpg cnpg/cloudnative-pg \
   --namespace cnpg-system \
   --create-namespace \
-  --version 0.27.0
+  --version 0.28.2
 
 # Verify operator installation
 kubectl get pods -n cnpg-system
@@ -36,7 +36,7 @@ helm repo add jetstack oci://quay.io/jetstack/charts/cert-manager
 helm install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
-  --version v1.19.2 \
+  --version v1.20.2 \
   --set installCRDs=true
 ```
 
