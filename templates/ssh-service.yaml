@@ -1,0 +1,52 @@
+
+{{- if .Values.ssh.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "common.names.fullname" . }}-ssh
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: forgejo-ssh
+  annotations: 
+    {{- if or .Values.ssh.service.annotations .Values.commonAnnotations }}
+    {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.ssh.service.annotations .Values.commonAnnotations ) "context" . ) }}{{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.ssh.service.type }}
+  {{- if and .Values.ssh.service.clusterIP (eq .Values.ssh.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.ssh.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.ssh.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.ssh.service.sessionAffinity }}
+  {{- end }}
+  {{- if .Values.ssh.service.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" .Values.ssh.service.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if or (eq .Values.ssh.service.type "LoadBalancer") (eq .Values.ssh.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.ssh.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq .Values.ssh.service.type "LoadBalancer") (not (empty .Values.ssh.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ .Values.ssh.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq .Values.ssh.service.type "LoadBalancer") (not (empty .Values.ssh.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.ssh.service.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.ssh.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ .Values.ssh.service.ipFamilyPolicy }}
+  {{- end }}
+  {{- if not (empty .Values.ssh.service.ipFamilies)}}
+  ipFamilies: {{- toYaml .Values.ssh.service.ipFamilies | nindent 4 }}
+  {{- end }}
+  ports:
+    - name: ssh
+      port: {{ .Values.ssh.service.ports.ssh }}
+      targetPort: ssh
+      {{- if and (or (eq .Values.ssh.service.type "NodePort") (eq .Values.ssh.service.type "LoadBalancer")) (not (empty .Values.ssh.service.nodePorts.ssh)) }}
+      nodePort: {{ .Values.ssh.service.nodePorts.ssh }}
+      {{- else if eq .Values.ssh.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+  {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.podLabels .Values.commonLabels) "context" .) | fromYaml }}
+  selector: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: forgejo
+{{- end }}

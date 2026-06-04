@@ -1,0 +1,422 @@
+<!--- app-name: Forgejo -->
+
+# Forgejo
+
+Forgejo is a lightweight code hosting solution. Written in Go, features low resource consumption, easy upgrades and multiple databases.
+
+[Overview of Forgejo](https://forgejo.io/)
+
+Trademarks: This software listing is packaged by Bitnami. The respective trademarks mentioned in the offering are owned by the respective companies, and use of them does not imply any affiliation or endorsement.
+
+## Install Forgejo
+
+### Install CloudNativePG Operator
+
+```bash
+# Add CNPG Helm repository
+helm repo add cnpg oci://ghcr.io/cloudnative-pg/charts/cloudnative-pg
+
+# Install CNPG operator
+helm install cnpg cnpg/cloudnative-pg \
+  --namespace cnpg-system \
+  --create-namespace \
+  --version 0.27.0
+
+# Verify operator installation
+kubectl get pods -n cnpg-system
+```
+
+### Install Cert-manager (Optional but Recommended)
+
+```bash
+# Add cert-manager repository
+helm repo add jetstack oci://quay.io/jetstack/charts/cert-manager
+
+# Install cert-manager
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.19.2 \
+  --set installCRDs=true
+```
+
+## Parameters
+
+### Global parameters
+
+| Name                      | Description                                     | Value |
+| ------------------------- | ----------------------------------------------- | ----- |
+| `global.imageRegistry`    | Global Docker image registry                    | `""`  |
+| `global.imagePullSecrets` | Global Docker registry secret names as an array | `[]`  |
+| `global.storageClass`     | Global StorageClass for Persistent Volume(s)    | `""`  |
+
+### Common parameters
+
+| Name                | Description                                                                                                 | Value           |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- | --------------- |
+| `kubeVersion`       | Force target Kubernetes version (using Helm capabilities if not set)                                        | `""`            |
+| `nameOverride`      | String to partially override forgejo.fullname template (will maintain the release name)                     | `""`            |
+| `fullnameOverride`  | String to fully override forgejo.fullname template                                                          | `""`            |
+| `namespaceOverride` | String to fully override common.names.namespace                                                             | `""`            |
+| `commonAnnotations` | Common annotations to add to all Forgejo resources (sub-charts are not considered). Evaluated as a template | `{}`            |
+| `commonLabels`      | Common labels to add to all Forgejo resources (sub-charts are not considered). Evaluated as a template      | `{}`            |
+| `clusterDomain`     | Default Kubernetes cluster domain                                                                           | `cluster.local` |
+| `extraDeploy`       | Array of extra objects to deploy with the release (evaluated as a template).                                | `[]`            |
+
+### Forgejo parameters
+
+| Name                                                | Description                                                                                                                                                                                                | Value                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `image.registry`                                    | Forgejo image registry                                                                                                                                                                                     | `REGISTRY_NAME`           |
+| `image.repository`                                  | Forgejo Image name                                                                                                                                                                                         | `REPOSITORY_NAME/forgejo` |
+| `image.digest`                                      | Forgejo image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                                                                                                    | `""`                      |
+| `image.pullPolicy`                                  | Forgejo image pull policy                                                                                                                                                                                  | `IfNotPresent`            |
+| `image.pullSecrets`                                 | Specify docker-registry secret names as an array                                                                                                                                                           | `[]`                      |
+| `adminUsername`                                     | User of the application                                                                                                                                                                                    | `forgejoadmin`            |
+| `adminPassword`                                     | Application password                                                                                                                                                                                       | `""`                      |
+| `adminEmail`                                        | Admin email                                                                                                                                                                                                | `user@example.com`        |
+| `appName`                                           | Forgejo application name                                                                                                                                                                                   | `example`                 |
+| `runMode`                                           | Forgejo application host                                                                                                                                                                                   | `prod`                    |
+| `rootURL`                                           | UI Root URL (for link generation)                                                                                                                                                                          | `""`                      |
+| `command`                                           | Override default container command (useful when using custom images)                                                                                                                                       | `[]`                      |
+| `args`                                              | Override default container args (useful when using custom images)                                                                                                                                          | `[]`                      |
+| `updateStrategy.type`                               | Update strategy - only really applicable for deployments with RWO PVs attached                                                                                                                             | `RollingUpdate`           |
+| `replicaCount`                                      | Number of Forgejo replicas to deploy                                                                                                                                                                       | `1`                       |
+| `priorityClassName`                                 | Forgejo pods' priorityClassName                                                                                                                                                                            | `""`                      |
+| `schedulerName`                                     | Name of the k8s scheduler (other than default)                                                                                                                                                             | `""`                      |
+| `topologySpreadConstraints`                         | Topology Spread Constraints for pod assignment                                                                                                                                                             | `[]`                      |
+| `automountServiceAccountToken`                      | Mount Service Account token in pod                                                                                                                                                                         | `false`                   |
+| `hostAliases`                                       | Add deployment host aliases                                                                                                                                                                                | `[]`                      |
+| `extraEnvVars`                                      | Extra environment variables                                                                                                                                                                                | `[]`                      |
+| `extraEnvVarsCM`                                    | ConfigMap containing extra env vars                                                                                                                                                                        | `""`                      |
+| `extraEnvVarsSecret`                                | Secret containing extra env vars (in case of sensitive data)                                                                                                                                               | `""`                      |
+| `extraVolumes`                                      | Array of extra volumes to be added to the deployment (evaluated as template). Requires setting `extraVolumeMounts`                                                                                         | `[]`                      |
+| `extraVolumeMounts`                                 | Array of extra volume mounts to be added to the container (evaluated as template). Normally used with `extraVolumes`.                                                                                      | `[]`                      |
+| `initContainers`                                    | Add additional init containers to the pod (evaluated as a template)                                                                                                                                        | `[]`                      |
+| `sidecars`                                          | Attach additional containers to the pod (evaluated as a template)                                                                                                                                          | `[]`                      |
+| `tolerations`                                       | Tolerations for pod assignment                                                                                                                                                                             | `[]`                      |
+| `existingSecret`                                    | Name of a secret with the application password                                                                                                                                                             | `""`                      |
+| `existingSecretKey`                                 | Key inside the existing secret containing the password                                                                                                                                                     | `admin-password`          |
+| `containerPorts`                                    | Container ports                                                                                                                                                                                            | `{}`                      |
+| `persistence.enabled`                               | Enable persistence using PVC                                                                                                                                                                               | `true`                    |
+| `persistence.storageClass`                          | PVC Storage Class for Forgejo volume                                                                                                                                                                       | `""`                      |
+| `persistence.accessModes`                           | PVC Access Mode for Forgejo volume                                                                                                                                                                         | `["ReadWriteOnce"]`       |
+| `persistence.size`                                  | PVC Storage Request for Forgejo volume                                                                                                                                                                     | `8Gi`                     |
+| `persistence.dataSource`                            | Custom PVC data source                                                                                                                                                                                     | `{}`                      |
+| `persistence.existingClaim`                         | A manually managed Persistent Volume Claim                                                                                                                                                                 | `""`                      |
+| `persistence.hostPath`                              | If defined, the forgejo-data volume will mount to the specified hostPath.                                                                                                                                  | `""`                      |
+| `persistence.annotations`                           | Persistent Volume Claim annotations                                                                                                                                                                        | `{}`                      |
+| `persistence.selector`                              | Selector to match an existing Persistent Volume for Forgejo data PVC                                                                                                                                       | `{}`                      |
+| `podAffinityPreset`                                 | Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                                                                                                        | `""`                      |
+| `podAntiAffinityPreset`                             | Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                                                                                                   | `soft`                    |
+| `nodeAffinityPreset.type`                           | Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`                                                                                                                  | `""`                      |
+| `nodeAffinityPreset.key`                            | Node label key to match Ignored if `affinity` is set.                                                                                                                                                      | `""`                      |
+| `nodeAffinityPreset.values`                         | Node label values to match. Ignored if `affinity` is set.                                                                                                                                                  | `[]`                      |
+| `affinity`                                          | Affinity for pod assignment                                                                                                                                                                                | `{}`                      |
+| `nodeSelector`                                      | Node labels for pod assignment. Evaluated as a template.                                                                                                                                                   | `{}`                      |
+| `resourcesPreset`                                   | Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production). | `none`                    |
+| `resources`                                         | Set container requests and limits for different resources like CPU or memory (essential for production workloads)                                                                                          | `{}`                      |
+| `podSecurityContext.enabled`                        | Enable Forgejo pods' Security Context                                                                                                                                                                      | `true`                    |
+| `podSecurityContext.fsGroupChangePolicy`            | Set filesystem group change policy                                                                                                                                                                         | `Always`                  |
+| `podSecurityContext.sysctls`                        | Set kernel settings using the sysctl interface                                                                                                                                                             | `[]`                      |
+| `podSecurityContext.supplementalGroups`             | Set filesystem extra groups                                                                                                                                                                                | `[]`                      |
+| `podSecurityContext.fsGroup`                        | Forgejo pods' group ID                                                                                                                                                                                     | `1000`                    |
+| `containerSecurityContext.enabled`                  | Enabled containers' Security Context                                                                                                                                                                       | `true`                    |
+| `containerSecurityContext.seLinuxOptions`           | Set SELinux options in container                                                                                                                                                                           | `nil`                     |
+| `containerSecurityContext.runAsUser`                | Set containers' Security Context runAsUser                                                                                                                                                                 | `1000`                    |
+| `containerSecurityContext.runAsNonRoot`             | Set container's Security Context runAsNonRoot                                                                                                                                                              | `true`                    |
+| `containerSecurityContext.privileged`               | Set container's Security Context privileged                                                                                                                                                                | `false`                   |
+| `containerSecurityContext.readOnlyRootFilesystem`   | Set container's Security Context readOnlyRootFilesystem                                                                                                                                                    | `false`                   |
+| `containerSecurityContext.allowPrivilegeEscalation` | Set container's Security Context allowPrivilegeEscalation                                                                                                                                                  | `false`                   |
+| `containerSecurityContext.capabilities.drop`        | List of capabilities to be dropped                                                                                                                                                                         | `["ALL"]`                 |
+| `containerSecurityContext.capabilities.add`         | List of capabilities to be added                                                                                                                                                                           | `["SYS_CHROOT"]`          |
+| `containerSecurityContext.seccompProfile.type`      | Set container's Security Context seccomp profile                                                                                                                                                           | `RuntimeDefault`          |
+| `startupProbe.enabled`                              | Enable startupProbe                                                                                                                                                                                        | `false`                   |
+| `startupProbe.path`                                 | Request path for startupProbe                                                                                                                                                                              | `/`                       |
+| `startupProbe.initialDelaySeconds`                  | Initial delay seconds for startupProbe                                                                                                                                                                     | `600`                     |
+| `startupProbe.periodSeconds`                        | Period seconds for startupProbe                                                                                                                                                                            | `10`                      |
+| `startupProbe.timeoutSeconds`                       | Timeout seconds for startupProbe                                                                                                                                                                           | `5`                       |
+| `startupProbe.failureThreshold`                     | Failure threshold for startupProbe                                                                                                                                                                         | `5`                       |
+| `startupProbe.successThreshold`                     | Success threshold for startupProbe                                                                                                                                                                         | `1`                       |
+| `livenessProbe.enabled`                             | Enable livenessProbe                                                                                                                                                                                       | `true`                    |
+| `livenessProbe.path`                                | Request path for livenessProbe                                                                                                                                                                             | `/`                       |
+| `livenessProbe.initialDelaySeconds`                 | Initial delay seconds for livenessProbe                                                                                                                                                                    | `600`                     |
+| `livenessProbe.periodSeconds`                       | Period seconds for livenessProbe                                                                                                                                                                           | `10`                      |
+| `livenessProbe.timeoutSeconds`                      | Timeout seconds for livenessProbe                                                                                                                                                                          | `5`                       |
+| `livenessProbe.failureThreshold`                    | Failure threshold for livenessProbe                                                                                                                                                                        | `5`                       |
+| `livenessProbe.successThreshold`                    | Success threshold for livenessProbe                                                                                                                                                                        | `1`                       |
+| `readinessProbe.enabled`                            | Enable readinessProbe                                                                                                                                                                                      | `true`                    |
+| `readinessProbe.path`                               | Request path for readinessProbe                                                                                                                                                                            | `/`                       |
+| `readinessProbe.initialDelaySeconds`                | Initial delay seconds for readinessProbe                                                                                                                                                                   | `30`                      |
+| `readinessProbe.periodSeconds`                      | Period seconds for readinessProbe                                                                                                                                                                          | `5`                       |
+| `readinessProbe.timeoutSeconds`                     | Timeout seconds for readinessProbe                                                                                                                                                                         | `1`                       |
+| `readinessProbe.failureThreshold`                   | Failure threshold for readinessProbe                                                                                                                                                                       | `5`                       |
+| `readinessProbe.successThreshold`                   | Success threshold for readinessProbe                                                                                                                                                                       | `1`                       |
+| `customStartupProbe`                                | Override default startup probe                                                                                                                                                                             | `{}`                      |
+| `customLivenessProbe`                               | Override default liveness probe                                                                                                                                                                            | `{}`                      |
+| `customReadinessProbe`                              | Override default readiness probe                                                                                                                                                                           | `{}`                      |
+| `lifecycleHooks`                                    | LifecycleHook to set additional configuration at startup Evaluated as a template                                                                                                                           | `{}`                      |
+| `podAnnotations`                                    | Pod annotations                                                                                                                                                                                            | `{}`                      |
+| `podLabels`                                         | Add additional labels to the pod (evaluated as a template)                                                                                                                                                 | `{}`                      |
+
+### Traffic Exposure Parameters
+
+| Name                                   | Description                                                                                                                      | Value                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `service.type`                         | Kubernetes Service type                                                                                                          | `ClusterIP`              |
+| `service.ports.http`                   | Service HTTP port                                                                                                                | `3000`                   |
+| `service.loadBalancerSourceRanges`     | Restricts access for LoadBalancer (only with `service.type: LoadBalancer`)                                                       | `[]`                     |
+| `service.loadBalancerIP`               | loadBalancerIP for the Forgejo Service (optional, cloud specific)                                                                | `""`                     |
+| `service.nodePorts`                    | Kubernetes node port                                                                                                             | `{}`                     |
+| `service.externalTrafficPolicy`        | Enable client source IP preservation                                                                                             | `Cluster`                |
+| `service.clusterIP`                    | Forgejo service Cluster IP                                                                                                       | `""`                     |
+| `service.extraPorts`                   | Extra ports to expose (normally used with the `sidecar` value)                                                                   | `[]`                     |
+| `service.annotations`                  | Additional custom annotations for Forgejo service                                                                                | `{}`                     |
+| `service.sessionAffinity`              | Session Affinity for Kubernetes service, can be "None" or "ClientIP"                                                             | `None`                   |
+| `service.sessionAffinityConfig`        | Additional settings for the sessionAffinity                                                                                      | `{}`                     |
+| `service.ipFamilyPolicy`               | Controller Service ipFamilyPolicy (optional, cloud specific)                                                                     | `PreferDualStack`        |
+| `service.ipFamilies`                   | Controller Service ipFamilies (optional, cloud specific)                                                                         | `[]`                     |
+| `ssh.enabled`                          | Make the SSH server accesible                                                                                                    | `true`                   |
+| `ssh.hostname`                         | Domain name of this server, used for displayed clone URL.                                                                        | `git-ssh.local`          |
+| `ssh.service.type`                     | Kubernetes Service type                                                                                                          | `LoadBalancer`           |
+| `ssh.service.ports.ssh`                | Service SSH port                                                                                                                 | `22`                     |
+| `ssh.service.loadBalancerSourceRanges` | Restricts access for LoadBalancer (only with `service.type: LoadBalancer`)                                                       | `[]`                     |
+| `ssh.service.loadBalancerIP`           | loadBalancerIP for the Forgejo Service (optional, cloud specific)                                                                | `""`                     |
+| `ssh.service.nodePorts`                | Kubernetes node port                                                                                                             | `{}`                     |
+| `ssh.service.externalTrafficPolicy`    | Enable client source IP preservation                                                                                             | `Cluster`                |
+| `ssh.service.clusterIP`                | Forgejo service Cluster IP                                                                                                       | `""`                     |
+| `ssh.service.extraPorts`               | Extra ports to expose (normally used with the `sidecar` value)                                                                   | `[]`                     |
+| `ssh.service.annotations`              | Additional custom annotations for Forgejo service                                                                                | `{}`                     |
+| `ssh.service.sessionAffinity`          | Session Affinity for Kubernetes service, can be "None" or "ClientIP"                                                             | `None`                   |
+| `ssh.service.sessionAffinityConfig`    | Additional settings for the sessionAffinity                                                                                      | `{}`                     |
+| `ssh.service.ipFamilyPolicy`           | Controller Service ipFamilyPolicy (optional, cloud specific)                                                                     | `PreferDualStack`        |
+| `ssh.service.ipFamilies`               | Controller Service ipFamilies (optional, cloud specific)                                                                         | `[]`                     |
+| `ingress.enabled`                      | Enable ingress record generation for forgejo                                                                                     | `true`                   |
+| `ingress.pathType`                     | Ingress path type                                                                                                                | `ImplementationSpecific` |
+| `ingress.apiVersion`                   | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
+| `ingress.hostname`                     | Default host for the ingress record                                                                                              | `forgejo.local`          |
+| `ingress.ingressClassName`             | IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)                                                    | `traefik`                |
+| `ingress.ingressControllerType`        | ingressControllerType that will be be used to implement the Ingress specific annotations (Ex. nginx or traefik)                  | `traefik`                |
+| `ingress.path`                         | Default path for the ingress record                                                                                              | `/`                      |
+| `ingress.annotations`                  | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |
+| `ingress.tls`                          | Enable TLS configuration for the host defined at `ingress.hostname` parameter                                                    | `false`                  |
+| `ingress.selfSigned`                   | Create a TLS secret for this ingress record using self-signed certificates generated by Helm                                     | `false`                  |
+| `ingress.extraHosts`                   | An array with additional hostname(s) to be covered with the ingress record                                                       | `[]`                     |
+| `ingress.extraPaths`                   | An array with additional arbitrary paths that may need to be added to the ingress under the main host                            | `[]`                     |
+| `ingress.extraTls`                     | TLS configuration for additional hostname(s) to be covered with this ingress record                                              | `[]`                     |
+| `ingress.secrets`                      | Custom TLS certificates as secrets                                                                                               | `[]`                     |
+| `ingress.extraRules`                   | Additional rules to be covered with this ingress record                                                                          | `[]`                     |
+
+### RBAC parameter
+
+| Name                                          | Description                                              | Value   |
+| --------------------------------------------- | -------------------------------------------------------- | ------- |
+| `serviceAccount.create`                       | Enable the creation of a ServiceAccount for forgejo pods | `true`  |
+| `serviceAccount.name`                         | Name of the created ServiceAccount                       | `""`    |
+| `serviceAccount.automountServiceAccountToken` | Auto-mount the service account token in the pod          | `false` |
+| `serviceAccount.annotations`                  | Additional custom annotations for the ServiceAccount     | `{}`    |
+
+### Database parameters
+
+| Name                                         | Description                                                             | Value     |
+| -------------------------------------------- | ----------------------------------------------------------------------- | --------- |
+| `postgresql.enabled`                         | Enable CloudNativePG cluster deployment                                 | `true`    |
+| `postgresql.instances`                       | Number of PostgreSQL instances (1 for single instance)                  | `1`       |
+| `postgresql.storage.size`                    | Storage size for PostgreSQL data                                        | `10Gi`    |
+| `postgresql.storage.storageClass`            | Storage class for PostgreSQL PVCs                                       | `""`      |
+| `postgresql.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`      |
+| `postgresql.database.name`                   | Database name                                                           | `forgejo` |
+| `postgresql.database.username`               | Database username                                                       | `forgejo` |
+| `postgresql.database.existingSecret`         | Existing secret with database credentials                               | `""`      |
+| `postgresql.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`      |
+| `postgresql.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`      |
+| `postgresql.tolerations`                     | Tolerations for PostgreSQL pod                                          | `{}`      |
+| `postgresql.nodeSelector`                    | Node selector for PostgreSQL pod                                        | `{}`      |
+| `postgresql.monitoring.enabled`              | Enable monitoring with PodMonitor                                       | `true`    |
+| `postgresql.backup.enabled`                  | Enable Barman plugin WAL backup configuration                           | `false`   |
+| `postgresql.backup.barmanObjectName`         | Barman ObjectStore name for backup                                      | `""`      |
+| `postgresql.superuserSecret`                 | Secret containing superuser credentials for the cluster                 | `""`      |
+| `postgresql.tls.enabled`                     | Enable TLS encryption for the cluster (requires cert-manager)           | `true`    |
+| `externalDatabase.host`                      | Database host                                                           | `""`      |
+| `externalDatabase.port`                      | Database port number                                                    | `5432`    |
+| `externalDatabase.username`                  | Non-root username for forgejo                                           | `forgejo` |
+| `externalDatabase.password`                  | Password for the non-root username for forgejo                          | `""`      |
+| `externalDatabase.database`                  | forgejo database name                                                   | `forgejo` |
+| `externalDatabase.existingSecret`            | Name of an existing secret resource containing the database credentials | `""`      |
+| `externalDatabase.existingSecretPasswordKey` | Name of an existing secret key containing the database credentials      | `""`      |
+
+### SMTP Configuration
+
+| Name                  | Description                                          | Value  |
+| --------------------- | ---------------------------------------------------- | ------ |
+| `smtp.enabled`        | Enable SMTP                                          | `true` |
+| `smtp.host`           | SMTP host                                            | `""`   |
+| `smtp.port`           | SMTP port                                            | `587`  |
+| `smtp.from`           | SMTP sender email address                            | `""`   |
+| `smtp.username`       | Username for the SMTP authentication.                | `""`   |
+| `smtp.password`       | Password for the SMTP service.                       | `""`   |
+| `smtp.existingSecret` | The name of an existing secret with SMTP credentials | `""`   |
+
+### Volume Permissions parameters
+
+| Name                                  | Description                                                                                                                                                                                                                                    | Value                      |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `volumePermissions.enabled`           | Enable init container that changes volume permissions in the data directory (for cases where the default k8s `runAsUser` and `fsUser` values do not work)                                                                                      | `false`                    |
+| `volumePermissions.image.registry`    | Init container volume-permissions image registry                                                                                                                                                                                               | `REGISTRY_NAME`            |
+| `volumePermissions.image.repository`  | Init container volume-permissions image name                                                                                                                                                                                                   | `REPOSITORY_NAME/os-shell` |
+| `volumePermissions.image.digest`      | Init container volume-permissions image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                                                                                                              | `""`                       |
+| `volumePermissions.image.pullPolicy`  | Init container volume-permissions image pull policy                                                                                                                                                                                            | `IfNotPresent`             |
+| `volumePermissions.image.pullSecrets` | Specify docker-registry secret names as an array                                                                                                                                                                                               | `[]`                       |
+| `volumePermissions.resourcesPreset`   | Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if volumePermissions.resources is set (volumePermissions.resources is recommended for production). | `none`                     |
+| `volumePermissions.resources`         | Set container requests and limits for different resources like CPU or memory (essential for production workloads)                                                                                                                              | `{}`                       |
+
+### Global TLS settings for internal CA
+
+| Name                               | Description                                                                                | Value             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------ | ----------------- |
+| `tls.enabled`                      | Enable internal TLS between Ingress controller and unifi                                   | `true`            |
+| `tls.autoGenerated`                | Create cert-manager signed TLS certificates.                                               | `true`            |
+| `tls.existingSecret`               | Existing secret containing the certificates for Unifi                                      | `""`              |
+| `tls.subject.organizationalUnits`  | Subject's organizational units                                                             | `forgejo`         |
+| `tls.subject.organizations`        | Subject's organization                                                                     | `forgejo`         |
+| `tls.subject.countries`            | Subject's country                                                                          | `fr`              |
+| `tls.issuerRef.existingIssuerName` | Existing name of the cert-manager http issuer. If provided, it won't create a default one. | `""`              |
+| `tls.issuerRef.kind`               | Kind of the cert-manager issuer resource (defaults to "Issuer")                            | `Issuer`          |
+| `tls.issuerRef.group`              | Group of the cert-manager issuer resource (defaults to "cert-manager.io")                  | `cert-manager.io` |
+
+### Auxiliary image parameters
+
+| Name                         | Description                                                                                               | Value                        |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `auxiliaryImage.registry`    | Auxiliary image registry                                                                                  | `REGISTRY_NAME`              |
+| `auxiliaryImage.repository`  | Auxiliary image repository                                                                                | `REPOSITORY_NAME/postgresql` |
+| `auxiliaryImage.digest`      | Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                         |
+| `auxiliaryImage.pullPolicy`  | Auxiliary image pull policy                                                                               | `IfNotPresent`               |
+| `auxiliaryImage.pullSecrets` | Auxiliary image pull secrets                                                                              | `[]`                         |
+
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+
+```console
+helm install my-release \
+  --set adminUsername=user,forgejoPassword=password,postgresql.auth.rootPassword=secretpassword \
+    oci://REGISTRY_NAME/REPOSITORY_NAME/forgejo
+```
+
+> Note: You need to substitute the placeholders `REGISTRY_NAME` and `REPOSITORY_NAME` with a reference to your Helm chart registry and repository. For example, in the case of Bitnami, you need to use `REGISTRY_NAME=registry-1.docker.io` and `REPOSITORY_NAME=bitnamicharts`.
+
+The above command sets the Forgejo administrator account username and password to `user` and `password` respectively. Additionally, it sets the PostgreSQL `root` user password to `secretpassword`.
+
+> NOTE: Once this chart is deployed, it is not possible to change the application's access credentials, such as usernames or passwords, using Helm. To change these application credentials after deployment, delete any persistent volumes (PVs) used by the chart and re-deploy it, or use the application's built-in administrative tools if available.
+
+Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
+
+```console
+helm install my-release -f values.yaml oci://REGISTRY_NAME/REPOSITORY_NAME/forgejo
+```
+
+> Note: You need to substitute the placeholders `REGISTRY_NAME` and `REPOSITORY_NAME` with a reference to your Helm chart registry and repository. For example, in the case of Bitnami, you need to use `REGISTRY_NAME=registry-1.docker.io` and `REPOSITORY_NAME=bitnamicharts`.
+> **Tip**: You can use the default [values.yaml](https://github.com/bitnami/charts/tree/main/bitnami/forgejo/values.yaml)
+
+## Configuration and installation details
+
+### Resource requests and limits
+
+Bitnami charts allow setting resource requests and limits for all containers inside the chart deployment. These are inside the `resources` value (check parameter table). Setting requests is essential for production workloads and these should be adapted to your specific use case.
+
+To make this process easier, the chart contains the `resourcesPreset` values, which automatically sets the `resources` section according to different presets. Check these presets in [the bitnami/common chart](https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15). However, in production workloads using `resourcePreset` is discouraged as it may not fully adapt to your specific needs. Find more information on container resource management in the [official Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
+
+### [Rolling VS Immutable tags](https://docs.bitnami.com/tutorials/understand-rolling-tags-containers)
+
+It is strongly recommended to use immutable tags in a production environment. This ensures your deployment does not change automatically if the same tag is updated with a different image.
+
+Bitnami will release a new chart updating its containers if a new version of the main container, significant changes, or critical vulnerabilities exist.
+
+### Image
+
+The `image` parameter allows specifying which image will be pulled for the chart.
+
+#### Private registry
+
+If you configure the `image` value to one in a private registry, you will need to [specify an image pull secret](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod).
+
+1. Manually create image pull secret(s) in the namespace. See [this YAML example reference](https://kubernetes.io/docs/concepts/containers/images/#creating-a-secret-with-a-docker-config). Consult your image registry's documentation about getting the appropriate secret.
+2. Note that the `imagePullSecrets` configuration value cannot currently be passed to helm using the `--set` parameter, so you must supply these using a `values.yaml` file, such as:
+
+    ```yaml
+    imagePullSecrets:
+      - name: SECRET_NAME
+    ```
+
+3. Install the chart
+
+### Setting Pod's affinity
+
+This chart allows you to set your custom affinity using the `affinity` parameter. Find more information about Pod's affinity in the [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity).
+
+As an alternative, you can use of the preset configurations for pod affinity, pod anti-affinity, and node affinity available at the [bitnami/common](https://github.com/bitnami/charts/tree/main/bitnami/common#affinities) chart. To do so, set the `podAffinityPreset`, `podAntiAffinityPreset`, or `nodeAffinityPreset` parameters.
+
+## Persistence
+
+The [Bitnami Forgejo](https://github.com/bitnami/containers/tree/main/bitnami/forgejo) image stores the Forgejo data and configurations at the `/bitnami/forgejo` path of the container.
+
+Persistent Volume Claims are used to keep the data across deployments. This is known to work in GCE, AWS, and minikube.
+See the [Parameters](#parameters) section to configure the PVC or to disable persistence.
+
+### Existing PersistentVolumeClaim
+
+1. Create the PersistentVolume
+2. Create the PersistentVolumeClaim
+3. Install the chart
+
+```console
+helm install my-release --set persistence.existingClaim=PVC_NAME oci://REGISTRY_NAME/REPOSITORY_NAME/forgejo
+```
+
+> Note: You need to substitute the placeholders `REGISTRY_NAME` and `REPOSITORY_NAME` with a reference to your Helm chart registry and repository. For example, in the case of Bitnami, you need to use `REGISTRY_NAME=registry-1.docker.io` and `REPOSITORY_NAME=bitnamicharts`.
+
+### Host path
+
+#### System compatibility
+
+- The local filesystem accessibility to a container in a pod with `hostPath` has been tested on OSX/MacOS with xhyve, and Linux with VirtualBox.
+- Windows has not been tested with the supported VM drivers. Minikube does however officially support [Mounting Host Folders](https://minikube.sigs.k8s.io/docs/handbook/mount/) per pod. Or you may manually sync your container whenever host files are changed with tools like [docker-sync](https://github.com/EugenMayer/docker-sync) or [docker-bg-sync](https://github.com/cweagans/docker-bg-sync).
+
+#### Mounting steps
+
+1. The specified `hostPath` directory must already exist (create one if it does not).
+2. Install the chart
+
+    ```console
+    helm install my-release --set persistence.hostPath=/PATH/TO/HOST/MOUNT oci://REGISTRY_NAME/REPOSITORY_NAME/forgejo
+    ```
+
+    > Note: You need to substitute the placeholders `REGISTRY_NAME` and `REPOSITORY_NAME` with a reference to your Helm chart registry and repository. For example, in the case of Bitnami, you need to use `REGISTRY_NAME=registry-1.docker.io` and `REPOSITORY_NAME=bitnamicharts`.
+
+    This will mount the `forgejo-data` volume into the `hostPath` directory. The site data will be persisted if the mount path contains valid data, else the site data will be initialized at first launch.
+3. Because the container cannot control the host machine's directory permissions, you must set the Forgejo file directory permissions yourself
+
+## Troubleshooting
+
+Find more information about how to deal with common errors related to Bitnami's Helm charts in [this troubleshooting guide](https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues).
+
+## Upgrading
+
+### To 1.0.0
+
+This major updates the PostgreSQL subchart to its newest major, 13.0.0. [Here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#to-1300) you can find more information about the changes introduced in that version.
+
+## License
+
+Copyright &copy; 2024 Broadcom. The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+<http://www.apache.org/licenses/LICENSE-2.0>
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

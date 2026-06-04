@@ -1,0 +1,32 @@
+name: forgejo
+annotations:
+  category: DevelopmentTools
+  licenses: Apache-2.0
+  images: |
+    - name: forgejo
+      image: codeberg.org/forgejo/forgejo:15.0.2-rootless
+    - name: os-shell
+      image: docker.io/bitnami/os-shell:latest
+    - name: postgresql
+      image: ghcr.io/cloudnative-pg/postgresql:18.3-system-trixie
+apiVersion: v2
+appVersion: 15.0.2
+dependencies:
+- name: common
+  repository: oci://registry-1.docker.io/bitnamicharts
+  tags:
+  - bitnami-common
+  version: 2.x.x
+description: Forgejo is a lightweight code hosting solution. Written in Go, features low resource consumption, easy upgrades and multiple databases.
+home: https://lab.frogg.it/doca/forgejo-helm
+icon: https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/assets/logo.svg
+keywords:
+  - forgejo
+maintainers:
+  - name: Benoît Pourre
+    email: benoit.pourre@gmail.com
+    url: https://github.com/captnbp
+sources:
+  - https://lab.frogg.it/doca/forgejo-helm
+  - https://codeberg.org/forgejo/forgejo
+version: 1.0.0
