@@ -357,7 +357,7 @@ As an alternative, you can use of the preset configurations for pod affinity, po
 
 ## Persistence
 
-The [Bitnami Forgejo](https://github.com/bitnami/containers/tree/main/bitnami/forgejo) image stores the Forgejo data and configurations at the `/bitnami/forgejo` path of the container.
+The Forgejo image stores the Forgejo data and configurations at the `/var/lib/gitea` path of the container.
 
 Persistent Volume Claims are used to keep the data across deployments. This is known to work in GCE, AWS, and minikube.
 See the [Parameters](#parameters) section to configure the PVC or to disable persistence.
@@ -401,9 +401,7 @@ Find more information about how to deal with common errors related to Bitnami's 
 
 ## Upgrading
 
-### To 1.0.0
-
-This major updates the PostgreSQL subchart to its newest major, 13.0.0. [Here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#to-1300) you can find more information about the changes introduced in that version.
+N/A
 
 ## License
 
