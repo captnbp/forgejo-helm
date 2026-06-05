@@ -34,8 +34,8 @@ jobs:
       #   with:
       #     version: '1.15.0'
 
-      - name: Setup curl and jq
-        run: apt-get update && apt-get install -y curl jq
+      # - name: Setup curl and jq
+      #   run: apt-get update && apt-get install -y curl jq
 
       # Étape 1: Helm Lint (peut être exécutée avant l'auth Vault)
       - name: Helm Lint
