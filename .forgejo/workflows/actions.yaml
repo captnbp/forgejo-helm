@@ -52,7 +52,7 @@ jobs:
           # Récupérer le JWT via l'API Forgejo
           # ACTIONS_ID_TOKEN_REQUEST_TOKEN et ACTIONS_ID_TOKEN_REQUEST_URL sont automatiquement injectés
           JWT=$(curl -s -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${VAULT_ADDR}")
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${VAULT_ADDR}" | cut -d: -f2 | cut -d'}' -f1)
           
           # Sauvegarder le JWT pour les étapes suivantes
           echo "jwt=$JWT" >> $FORGEJO_OUTPUT
