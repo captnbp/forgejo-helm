@@ -111,7 +111,7 @@ jobs:
           helm push $PACKAGE_NAME oci://registry-1.docker.io/captnbp 2> chart-digest.txt
           CHART_URL=$(grep "Pushed" chart-digest.txt | cut -d' ' -f2)
           CHART_DIGEST=$(grep "Digest" chart-digest.txt | cut -d' ' -f2)
-          rm chart-digest.txt
+          cat chart-digest.txt
           echo "CHART_URL=${CHART_URL}" >> ${FORGEJO_ENV}
           echo "CHART_DIGEST=${CHART_DIGEST}" >> ${FORGEJO_ENV}
 
@@ -122,7 +122,5 @@ jobs:
           VAULT_TOKEN: ${{ env.VAULT_TOKEN }}
         run: |
           docker login --username ${OCI_USERNAME} --password "${OCI_PASSWORD}" registry-1.docker.io
-          CHART_URL=$(grep "Pushed" chart-digest.txt | cut -d' ' -f2)
-          CHART_DIGEST=$(grep "Digest" chart-digest.txt | cut -d' ' -f2)
           cosign sign --new-bundle-format -a sig=gitlab-ci -y --upload=true --tlog-upload=true --key hashivault://cosign ${CHART_URL}@${CHART_DIGEST}
 
