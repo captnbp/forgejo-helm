@@ -704,15 +704,10 @@ networkPolicy:
     ##
     egress:
       ## @param networkPolicy.forgejo.egress.toSMTP.enabled Allow traffic to SMTP servers
-      ## @param networkPolicy.forgejo.egress.toSMTP.ports [array] SMTP ports to allow
       ## @param networkPolicy.forgejo.egress.toSMTP.cidrBlocks CIDR blocks to SMTP
       ##
       toSMTP:
         enabled: true
-        ports:
-          - 25
-          - 587
-          - 465
         cidrBlocks:
           - 0.0.0.0/0
           - ::/0

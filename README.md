@@ -332,7 +332,6 @@ helm install cert-manager jetstack/cert-manager \
 | `networkPolicy.forgejo.ingress.fromMonitoring.namespaceSelector`        | Namespace selector for monitoring                                                  | `{}`                   |
 | `networkPolicy.forgejo.ingress.fromMonitoring.podSelector`              | Pod selector for monitoring                                                        | `{}`                   |
 | `networkPolicy.forgejo.egress.toSMTP.enabled`                           | Allow traffic to SMTP servers                                                      | `true`                 |
-| `networkPolicy.forgejo.egress.toSMTP.ports`                             | SMTP ports to allow                                                                | `[]`                   |
 | `networkPolicy.forgejo.egress.toSMTP.cidrBlocks`                        | CIDR blocks to SMTP                                                                | `["0.0.0.0/0","::/0"]` |
 | `networkPolicy.forgejo.egress.toInternet.enabled`                       | Allow traffic to Internet                                                          | `true`                 |
 | `networkPolicy.forgejo.egress.toInternet.cidrBlocks`                    | CIDR blocks to Internet                                                            | `["0.0.0.0/0","::/0"]` |

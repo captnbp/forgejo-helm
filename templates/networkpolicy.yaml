@@ -109,10 +109,8 @@ spec:
             cidr: {{ . }}
         {{- end }}
       ports:
-        {{- range .Values.networkPolicy.forgejo.egress.toSMTP.ports }}
         - protocol: TCP
-          port: {{ . }}
-        {{- end }}
+          port: {{ .Values.smtp.port }}
     {{- end }}
     {{- if .Values.postgresql.enabled }}
     - to:
