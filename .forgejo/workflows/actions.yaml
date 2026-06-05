@@ -80,7 +80,7 @@ jobs:
           VAULT_TOKEN: ${{ env.VAULT_TOKEN }}
         run: |
           # Récupérer les credentials depuis Vault KV v2
-          OCI_CREDENTIALS=$(VAULT_TOKEN=${VAULT_TOKEN} VAULT_ADDR=$VAULT_ADDR vault kv get -format=json kv/oci/docker-hub | jq -r '.data.data')
+          OCI_CREDENTIALS=$(VAULT_TOKEN=${VAULT_TOKEN} VAULT_ADDR=$VAULT_ADDR vault kv get -format=json secret/forgejo-runners/oci/docker-hub | jq -r '.data.data')
           OCI_USERNAME=$(echo ${OCI_CREDENTIALS} | jq -r '.username')
           OCI_PASSWORD=$(echo ${OCI_CREDENTIALS} | jq -r '.token')
           
