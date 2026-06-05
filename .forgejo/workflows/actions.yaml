@@ -67,7 +67,7 @@ jobs:
           JWT=${{ steps.get-jwt.outputs.jwt }}
           
           # Authentification à Vault avec ce JWT
-          VAULT_TOKEN=$(VAULT_ADDR=$VAULT_ADDR vault write -field=token auth/jwt/login role=$(echo ${FORGEJO_REPOSITORY} | awk -F/ '{print $NF}') jwt=$JWT)
+          VAULT_TOKEN=$(VAULT_ADDR=$VAULT_ADDR vault write -field=token auth/jwt/${VAULT_HOSTNAME}/login role=$(echo ${FORGEJO_REPOSITORY} | awk -F/ '{print $NF}') jwt=$JWT)
           
           # Exporter le token Vault pour les étapes suivantes
           echo "VAULT_TOKEN=${VAULT_TOKEN}" >> ${FORGEJO_ENV}
