@@ -39,7 +39,9 @@ jobs:
 
       # Étape 1: Helm Lint (peut être exécutée avant l'auth Vault)
       - name: Helm Lint
-        run: helm lint .
+        run: |
+          helm package --dependency-update .
+          helm lint .
 
       # Étape 2: Récupérer le JWT depuis Forgejo OIDC
       - name: Get JWT from Forgejo OIDC
