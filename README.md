@@ -180,9 +180,6 @@ helm install cert-manager jetstack/cert-manager \
 | `image.digest`                                      | Forgejo image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag                                                                                                    | `""`                      |
 | `image.pullPolicy`                                  | Forgejo image pull policy                                                                                                                                                                                  | `IfNotPresent`            |
 | `image.pullSecrets`                                 | Specify docker-registry secret names as an array                                                                                                                                                           | `[]`                      |
-| `adminUsername`                                     | User of the application                                                                                                                                                                                    | `forgejoadmin`            |
-| `adminPassword`                                     | Application password                                                                                                                                                                                       | `""`                      |
-| `adminEmail`                                        | Admin email                                                                                                                                                                                                | `user@example.com`        |
 | `appName`                                           | Forgejo application name                                                                                                                                                                                   | `example`                 |
 | `runMode`                                           | Forgejo application host                                                                                                                                                                                   | `prod`                    |
 | `rootURL`                                           | UI Root URL (for link generation)                                                                                                                                                                          | `""`                      |
@@ -204,7 +201,6 @@ helm install cert-manager jetstack/cert-manager \
 | `sidecars`                                          | Attach additional containers to the pod (evaluated as a template)                                                                                                                                          | `[]`                      |
 | `tolerations`                                       | Tolerations for pod assignment                                                                                                                                                                             | `[]`                      |
 | `existingSecret`                                    | Name of a secret with the application password                                                                                                                                                             | `""`                      |
-| `existingSecretKey`                                 | Key inside the existing secret containing the password                                                                                                                                                     | `admin-password`          |
 | `containerPorts`                                    | Container ports                                                                                                                                                                                            | `{}`                      |
 | `persistence.enabled`                               | Enable persistence using PVC                                                                                                                                                                               | `true`                    |
 | `persistence.storageClass`                          | PVC Storage Class for Forgejo volume                                                                                                                                                                       | `""`                      |
@@ -284,7 +280,7 @@ helm install cert-manager jetstack/cert-manager \
 | `service.sessionAffinityConfig`        | Additional settings for the sessionAffinity                                                                                      | `{}`                     |
 | `service.ipFamilyPolicy`               | Controller Service ipFamilyPolicy (optional, cloud specific)                                                                     | `PreferDualStack`        |
 | `service.ipFamilies`                   | Controller Service ipFamilies (optional, cloud specific)                                                                         | `[]`                     |
-| `ssh.enabled`                          | Make the SSH server accesible                                                                                                    | `true`                   |
+| `ssh.enabled`                          | Make the SSH server accesible                                                                                                    | `false`                  |
 | `ssh.hostname`                         | Domain name of this server, used for displayed clone URL.                                                                        | `git-ssh.local`          |
 | `ssh.service.type`                     | Kubernetes Service type                                                                                                          | `LoadBalancer`           |
 | `ssh.service.ports.ssh`                | Service SSH port                                                                                                                 | `22`                     |
@@ -432,20 +428,21 @@ helm install cert-manager jetstack/cert-manager \
 
 ### Prometheus metrics
 
-| Name                                       | Description                                                                                            | Value   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------- |
-| `metrics.enabled`                          | Enable the export of Prometheus metrics                                                                | `true`  |
-| `metrics.serviceMonitor.enabled`           | if `true`, creates a Prometheus Operator ServiceMonitor (also requires `metrics.enabled` to be `true`) | `true`  |
-| `metrics.serviceMonitor.namespace`         | Namespace in which Prometheus is running                                                               | `""`    |
-| `metrics.serviceMonitor.annotations`       | Additional custom annotations for the ServiceMonitor                                                   | `{}`    |
-| `metrics.serviceMonitor.labels`            | Extra labels for the ServiceMonitor                                                                    | `{}`    |
-| `metrics.serviceMonitor.jobLabel`          | The name of the label on the target service to use as the job name in Prometheus                       | `""`    |
-| `metrics.serviceMonitor.honorLabels`       | honorLabels chooses the metric's labels on collisions with target labels                               | `false` |
-| `metrics.serviceMonitor.interval`          | Interval at which metrics should be scraped.                                                           | `""`    |
-| `metrics.serviceMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                                                | `""`    |
-| `metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                               | `[]`    |
-| `metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                             | `[]`    |
-| `metrics.serviceMonitor.selector`          | Prometheus instance selector labels                                                                    | `{}`    |
+| Name                                       | Description                                                                                                                                                                    | Value   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `metrics.enabled`                          | Enable the export of Prometheus metrics                                                                                                                                        | `true`  |
+| `metrics.bearerToken`                      | You need to specify the token if you want to include authorization in the metrics. The same token needs to be used in Prometheus parameters bearer_token or bearer_token_file. | `""`    |
+| `metrics.serviceMonitor.enabled`           | if `true`, creates a Prometheus Operator ServiceMonitor (also requires `metrics.enabled` to be `true`)                                                                         | `true`  |
+| `metrics.serviceMonitor.namespace`         | Namespace in which Prometheus is running                                                                                                                                       | `""`    |
+| `metrics.serviceMonitor.annotations`       | Additional custom annotations for the ServiceMonitor                                                                                                                           | `{}`    |
+| `metrics.serviceMonitor.labels`            | Extra labels for the ServiceMonitor                                                                                                                                            | `{}`    |
+| `metrics.serviceMonitor.jobLabel`          | The name of the label on the target service to use as the job name in Prometheus                                                                                               | `""`    |
+| `metrics.serviceMonitor.honorLabels`       | honorLabels chooses the metric's labels on collisions with target labels                                                                                                       | `false` |
+| `metrics.serviceMonitor.interval`          | Interval at which metrics should be scraped.                                                                                                                                   | `""`    |
+| `metrics.serviceMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                                                                                                                        | `""`    |
+| `metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                                                                                                       | `[]`    |
+| `metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                                                                                                     | `[]`    |
+| `metrics.serviceMonitor.selector`          | Prometheus instance selector labels                                                                                                                                            | `{}`    |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

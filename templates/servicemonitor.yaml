@@ -21,6 +21,9 @@ spec:
   endpoints:
     - port: http
       path: /metrics
+      bearerTokenSecret:
+        key: "metrics-bearer-token"
+        name: {{ include "common.names.fullname" . }}
       {{- if .Values.tls.enabled }}
       {{- $releaseNamespace := .Release.Namespace }}
       {{- $clusterDomain := .Values.clusterDomain }}

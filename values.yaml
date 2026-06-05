@@ -73,19 +73,6 @@ image:
   ##   - myRegistryKeySecretName
   ##
   pullSecrets: []
-## @param adminUsername User of the application
-## ref: https://github.com/bitnami/containers/tree/main/bitnami/forgejo#configuration
-##
-adminUsername: forgejoadmin
-## @param adminPassword Application password
-## Defaults to a random 10-character alphanumeric string if not set
-## ref: https://github.com/bitnami/containers/tree/main/bitnami/forgejo#configuration
-##
-adminPassword: ""
-## @param adminEmail Admin email
-## ref: https://github.com/bitnami/containers/tree/main/bitnami/forgejo#configuration
-##
-adminEmail: user@example.com
 ## @param appName Forgejo application name
 ## ref: https://github.com/bitnami/containers/tree/main/bitnami/forgejo#configuration
 ##
@@ -169,9 +156,6 @@ tolerations: []
 ## @param existingSecret Name of a secret with the application password
 ##
 existingSecret: ""
-## @param existingSecretKey Key inside the existing secret containing the password
-##
-existingSecretKey: "admin-password"
 
 ## @param containerPorts [object] Container ports
 ##
@@ -475,7 +459,7 @@ service:
 ## @param ssh.enabled Make the SSH server accesible
 ##
 ssh:
-  enabled: true
+  enabled: false
   ## @param ssh.hostname Domain name of this server, used for displayed clone URL.
   hostname: git-ssh.local
   ## Kubernetes configuration. For minikube, set this to NodePort, elsewhere use LoadBalancer
@@ -1019,6 +1003,9 @@ metrics:
   ## @param metrics.enabled Enable the export of Prometheus metrics
   ##
   enabled: true
+  ## @param metrics.bearerToken You need to specify the token if you want to include authorization in the metrics. The same token needs to be used in Prometheus parameters bearer_token or bearer_token_file.
+  ## ref: https://forgejo.org/docs/latest/admin/config-cheat-sheet/#metrics-metrics
+  bearerToken: ""
   ## Prometheus Operator ServiceMonitor configuration
   ##
   serviceMonitor:

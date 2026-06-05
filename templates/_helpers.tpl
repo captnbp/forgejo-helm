@@ -63,17 +63,6 @@ Forgejo root URL
 {{- end -}}
 
 {{/*
-Forgejo credential secret name
-*/}}
-{{- define "forgejo.secretKey" -}}
-{{- if .Values.existingSecret -}}
-    {{- print .Values.existingSecretKey -}}
-{{- else -}}
-    {{- print "admin-password" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Return the SMTP Secret Name
 */}}
 {{- define "forgejo.smtpSecretName" -}}

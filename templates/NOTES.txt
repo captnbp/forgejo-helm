@@ -45,30 +45,6 @@ WARNING: You did not specify a Root URL for Forgejo. The rendered URLs in Forgej
   echo "Forgejo URL: http://$NODE_IP:$NODE_PORT/"
 
 {{- end }}
-
-2. Get your Forgejo login credentials by running:
-
-  echo Username: {{ .Values.adminUsername }}
-  echo Password: $(kubectl get secret --namespace {{ include "common.names.namespace" . }} {{ template "forgejo.secretName" . }} -o jsonpath="{.data.admin-password}" | base64 -d)
-
-{{- else -}}
-
-########################################################################################
-### ERROR: You did not provide an external database host in your 'helm install' call ###
-########################################################################################
-
-This deployment will be incomplete until you configure Forgejo with a resolvable database
-host. To configure Forgejo to use and external database host:
-
-1. Complete your Forgejo deployment by running:
-
-  export APP_PASSWORD=$(kubectl get secret --namespace {{ include "common.names.namespace" . }} {{ template "forgejo.secretName" . }} -o jsonpath="{.data.admin-password}" | base64 -d)
-
-  ## PLEASE UPDATE THE EXTERNAL DATABASE CONNECTION PARAMETERS IN THE FOLLOWING COMMAND AS NEEDED ##
-
-  helm upgrade --namespace {{ include "common.names.namespace" . }} {{ .Release.Name }} oci://registry-1.docker.io/bitnamicharts/{{ .Chart.Name }} \
-    --set forgejoPassword=$APP_PASSWORD,service.type={{ .Values.service.type }},postgresql.enabled=false{{- if not (empty .Values.externalDatabase.user) }},externalDatabase.user={{ .Values.externalDatabase.user }}{{- end }}{{- if not (empty .Values.externalDatabase.password) }},externalDatabase.password={{ .Values.externalDatabase.password }}{{- end }}{{- if not (empty .Values.externalDatabase.database) }},externalDatabase.database={{ .Values.externalDatabase.database }}{{- end }},externalDatabase.host=YOUR_EXTERNAL_DATABASE_HOST{{- if .Values.global }}{{- if .Values.global.imagePullSecrets }},global.imagePullSecrets={{ .Values.global.imagePullSecrets }}{{- end }}{{- end }}
-
 {{- end }}
 
 {{- include "common.warnings.rollingTag" .Values.image }}
