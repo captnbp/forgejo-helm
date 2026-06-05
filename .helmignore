@@ -20,3 +20,5 @@
 .idea/
 *.tmproj
 .gitlab-ci.yml
+.forgejo
+renovate.json
