@@ -109,7 +109,7 @@ args: []
 ## terminate the single previous pod, so that the new, incoming pod can attach to the PV
 ##
 updateStrategy:
-  type: RollingUpdate
+  type: Recreate
 ## @param replicaCount Number of Forgejo replicas to deploy
 ##
 replicaCount: 1
@@ -668,6 +668,100 @@ serviceAccount:
   annotations: {}
 
 
+## @section NetworkPolicy Configuration
+##
+## NetworkPolicy configuration for forgejo and PostgreSQL
+##
+networkPolicy:
+  ## @param networkPolicy.forgejo.enabled Enable NetworkPolicy for forgejo
+  ##
+  forgejo:
+    enabled: true
+    
+    ## Ingress rules configuration
+    ##
+    ingress:
+      ## @param networkPolicy.forgejo.ingress.fromIngressController.enabled Allow traffic from Ingress Controller
+      ## @param networkPolicy.forgejo.ingress.fromIngressController.namespaceSelector [object] Namespace selector for Ingress Controller
+      ## @param networkPolicy.forgejo.ingress.fromIngressController.podSelector [object] Pod selector for Ingress Controller
+      ##
+      fromIngressController:
+        enabled: true
+        namespaceSelector: []
+        podSelector: []
+        # For Ingress-Nginx
+        # namespaceSelector:
+        #   kubernetes.io/metadata.name: ingress-nginx
+        # podSelector:
+        #   app.kubernetes.io/component: controller
+        #   app.kubernetes.io/instance: ingress-nginx
+        #   app.kubernetes.io/name: ingress-nginx
+        # Alternative for Traefik:
+        # namespaceSelector:
+        #   kubernetes.io/metadata.name: traefik
+        # podSelector:
+        #   app.kubernetes.io/name: traefik
+        #   app.kubernetes.io/instance: traefik-traefik
+      
+      ## @param networkPolicy.forgejo.ingress.fromMonitoring.enabled Allow traffic from monitoring namespace
+      ## @param networkPolicy.forgejo.ingress.fromMonitoring.namespaceSelector [object] Namespace selector for monitoring
+      ## @param networkPolicy.forgejo.ingress.fromMonitoring.podSelector [object] Pod selector for monitoring
+      ##
+      fromMonitoring:
+        enabled: true
+        namespaceSelector:
+          kubernetes.io/metadata.name: kube-prometheus-stack
+        podSelector:
+          app.kubernetes.io/instance: kube-prometheus-stack-prometheus
+          app.kubernetes.io/name: prometheus
+          prometheus: kube-prometheus-stack-prometheus
+    
+    ## Egress rules configuration
+    ##
+    egress:
+      ## @param networkPolicy.forgejo.egress.toSMTP.enabled Allow traffic to SMTP servers
+      ## @param networkPolicy.forgejo.egress.toSMTP.ports [array] SMTP ports to allow
+      ## @param networkPolicy.forgejo.egress.toSMTP.cidrBlocks CIDR blocks to SMTP
+      ##
+      toSMTP:
+        enabled: true
+        ports:
+          - 25
+          - 587
+          - 465
+        cidrBlocks:
+          - 0.0.0.0/0
+          - ::/0
+      
+      ## @param networkPolicy.forgejo.egress.toInternet.enabled Allow traffic to Internet
+      ## @param networkPolicy.forgejo.egress.toInternet.cidrBlocks CIDR blocks to Internet
+      ## @param networkPolicy.forgejo.egress.toInternet.ports [array] Internet ports to allow
+      ##
+      toInternet:
+        enabled: true
+        cidrBlocks:
+          - 0.0.0.0/0
+          - ::/0
+        ports:
+          - protocol: TCP
+            port: 443
+          - protocol: UDP
+            port: 443
+      ## @param networkPolicy.forgejo.egress.extraEgress [array] Add extra ingress rules to the NetworkPolicy (ignored if allowExternalEgress=true)
+      ## extraEgress:
+      ##   - ports:
+      ##       - port: 1234
+      ##         protocol: TCP
+      ##     to:
+      ##       - podSelector:
+      ##           matchLabels:
+      ##             role: frontend
+      ##       - namespaceSelector:
+      ##           matchLabels:
+      ##             role: frontend
+      ##
+      extraEgress: []
+
 ## @section Database parameters
 
 ## CloudNativePG Cluster configuration
@@ -686,7 +780,6 @@ serviceAccount:
 ## @param postgresql.affinity Affinity configuration for PostgreSQL pod
 ## @param postgresql.tolerations Tolerations for PostgreSQL pod
 ## @param postgresql.nodeSelector Node selector for PostgreSQL pod
-## @param postgresql.monitoring.enabled Enable monitoring with PodMonitor
 ## @param postgresql.backup.enabled Enable Barman plugin WAL backup configuration
 ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/
 ## @param postgresql.backup.barmanObjectName Barman ObjectStore name for backup
@@ -713,8 +806,46 @@ postgresql:
   affinity: {}
   tolerations: {}
   nodeSelector: {}
-  monitoring:
-    enabled: true
+  metrics:
+    ## Prometheus Operator PodMonitor configuration
+    ##
+    podMonitor:
+      ## @param postgresql.metrics.podMonitor.enabled if `true`, creates a Prometheus Operator podMonitor (also requires `metrics.enabled` to be `true`)
+      ##
+      enabled: true
+      ## @param postgresql.metrics.podMonitor.namespace Namespace in which Prometheus is running
+      ##
+      namespace: ""
+      ## @param postgresql.metrics.podMonitor.annotations Additional custom annotations for the podMonitor
+      ##
+      annotations: {}
+      ## @param postgresql.metrics.podMonitor.labels Extra labels for the podMonitor
+      ##
+      labels: {}
+      ## @param postgresql.metrics.podMonitor.jobLabel The name of the label on the target service to use as the job name in Prometheus
+      ##
+      jobLabel: ""
+      ## @param postgresql.metrics.podMonitor.honorLabels honorLabels chooses the metric's labels on collisions with target labels
+      ##
+      honorLabels: false
+      ## @param postgresql.metrics.podMonitor.interval Interval at which metrics should be scraped.
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ## e.g:
+      ## interval: 10s
+      ##
+      interval: ""
+      ## @param postgresql.metrics.podMonitor.scrapeTimeout Timeout after which the scrape is ended
+      ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+      ## e.g:
+      ## scrapeTimeout: 10s
+      ##
+      scrapeTimeout: ""
+      ## @param postgresql.metrics.podMonitor.metricRelabelings Specify additional relabeling of metrics
+      ##
+      metricRelabelings: []
+      ## @param postgresql.metrics.podMonitor.relabelings Specify general relabeling
+      ##
+      relabelings: []
   backup:
     enabled: false
     barmanObjectName: ""
@@ -881,3 +1012,55 @@ auxiliaryImage:
   ##   - myRegistryKeySecretName
   ##
   pullSecrets: []
+
+## @section Prometheus metrics
+##
+metrics:
+  ## @param metrics.enabled Enable the export of Prometheus metrics
+  ##
+  enabled: true
+  ## Prometheus Operator ServiceMonitor configuration
+  ##
+  serviceMonitor:
+    ## @param metrics.serviceMonitor.enabled if `true`, creates a Prometheus Operator ServiceMonitor (also requires `metrics.enabled` to be `true`)
+    ##
+    enabled: true
+    ## @param metrics.serviceMonitor.namespace Namespace in which Prometheus is running
+    ##
+    namespace: ""
+    ## @param metrics.serviceMonitor.annotations Additional custom annotations for the ServiceMonitor
+    ##
+    annotations: {}
+    ## @param metrics.serviceMonitor.labels Extra labels for the ServiceMonitor
+    ##
+    labels: {}
+    ## @param metrics.serviceMonitor.jobLabel The name of the label on the target service to use as the job name in Prometheus
+    ##
+    jobLabel: ""
+    ## @param metrics.serviceMonitor.honorLabels honorLabels chooses the metric's labels on collisions with target labels
+    ##
+    honorLabels: false
+    ## @param metrics.serviceMonitor.interval Interval at which metrics should be scraped.
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ## e.g:
+    ## interval: 10s
+    ##
+    interval: ""
+    ## @param metrics.serviceMonitor.scrapeTimeout Timeout after which the scrape is ended
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ## e.g:
+    ## scrapeTimeout: 10s
+    ##
+    scrapeTimeout: ""
+    ## @param metrics.serviceMonitor.metricRelabelings Specify additional relabeling of metrics
+    ##
+    metricRelabelings: []
+    ## @param metrics.serviceMonitor.relabelings Specify general relabeling
+    ##
+    relabelings: []
+    ## @param metrics.serviceMonitor.selector Prometheus instance selector labels
+    ## ref: https://github.com/bitnami/charts/tree/main/bitnami/prometheus-operator#prometheus-configuration
+    ## selector:
+    ##   prometheus: my-prometheus
+    ##
+    selector: {}

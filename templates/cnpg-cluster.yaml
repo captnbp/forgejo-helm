@@ -2,7 +2,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: {{ include "forgejo.cnp.fullname" . }}
+  name: {{ include "forgejo.postgresql.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: database
@@ -20,10 +20,10 @@ spec:
   
   bootstrap:
     initdb:
-      database: {{ .Values.postgresql.database.name | quote }}
-      owner: {{ .Values.postgresql.database.user | quote }}
+      database: {{ include "forgejo.database.name" . | quote }}
+      owner: {{ include "forgejo.database.username" . | quote }}
       secret:
-        name: {{ include "forgejo.cnp.secretName" . }}
+        name: {{ include "forgejo.postgresql.secretName" . }}
   
   storage:
     size: {{ .Values.postgresql.storage.size | quote }}
@@ -50,12 +50,6 @@ spec:
   nodeSelector:
   {{- toYaml .Values.postgresql.nodeSelector | nindent 4 }}
   {{- end }}
-
-  {{- if .Values.postgresql.monitoring.enabled }}
-  monitoring:
-    enablePodMonitor: true
-  {{- end }}
-  
   {{- if .Values.postgresql.backup.enabled }}
   backup:
     plugins:
@@ -72,7 +66,7 @@ spec:
 
   {{- if .Values.postgresql.tls.enabled }}
   certificates:
-    serverTLSSecret: {{ include "forgejo.cnp.fullname" . }}-crt
-    serverCASecret: {{ include "forgejo.cnp.fullname" . }}-crt
+    serverTLSSecret: {{ include "forgejo.postgresql.fullname" . }}-crt
+    serverCASecret: {{ include "forgejo.postgresql.fullname" . }}-crt
   {{- end }}
 {{- end }}

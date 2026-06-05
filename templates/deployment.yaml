@@ -147,8 +147,6 @@ spec:
               value: "prod"
             - name: FORGEJO__cron__ENABLED
               value: "true"
-            - name: FORGEJO__metrics__ENABLED
-              value: "true"
             - name: FORGEJO__time__DEFAULT_UI_LOCATION
               value: "Europe/Paris"
             {{- if .Values.ssh.enabled }}
@@ -215,6 +213,10 @@ spec:
               value: /certs/tls.key
             - name: FORGEJO__server__SSL_MIN_VERSION
               value: TLSv1.2
+            {{- end }}
+            {{- if .Values.metrics.enabled }}
+            - name: FORGEJO__metrics__ENABLED
+              value: "true"
             {{- end }}
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}

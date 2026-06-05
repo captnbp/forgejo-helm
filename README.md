@@ -8,6 +8,114 @@ Forgejo is a lightweight code hosting solution. Written in Go, features low reso
 
 Trademarks: This software listing is packaged by Bitnami. The respective trademarks mentioned in the offering are owned by the respective companies, and use of them does not imply any affiliation or endorsement.
 
+## Architecture
+
+The following diagram illustrates the forgejo Helm chart architecture with network flows when NetworkPolicies are enabled:
+
+```mermaid
+graph TB
+    subgraph Internet["External Network"]
+        Users[Users/Clients]
+        SMTP[SMTP Servers<br/>Ports: 25, 587, 465]
+        ExtServices[External Services<br/>HTTPS: 443, HTTP: 80]
+        S3[Object Storage/S3<br/>Port: 443]
+    end
+
+    subgraph K8s["Kubernetes Cluster"]
+        subgraph IngressNS["Ingress Namespace<br/>ingress-nginx or traefik"]
+            Ingress[Ingress Controller<br/>nginx/traefik]
+        end
+
+        subgraph MonitoringNS["kube-prometheus-stack Namespace<br/>Optional"]
+            Prometheus[Prometheus<br/>Metrics Collection]
+        end
+
+        subgraph forgejoNS["Forgejo Namespace"]
+            subgraph VWPod["Forgejo Pod"]
+                VW[Forgejo<br/>Port: 3000]
+            end
+
+            subgraph CNPGCluster["CloudNativePG Cluster"]
+                PG1[PostgreSQL Primary<br/>Port: 5432]
+                PG2[PostgreSQL Replica<br/>Port: 5432]
+            end
+        end
+
+        subgraph SystemNS["kube-system Namespace"]
+            DNS[CoreDNS<br/>Port: 53 UDP/TCP]
+        end
+
+        subgraph CNPGNS["cnpg-system Namespace"]
+            CNPGOp[CNPG Operator<br/>Cluster Management]
+        end
+    end
+
+    Users -->|HTTPS/HTTP| Ingress
+    Ingress -->|HTTP: 3000<br/>NetworkPolicy: Ingress| VW
+    
+    VW -->|PostgreSQL: 5432<br/>NetworkPolicy: Egress| PG1
+    VW -->|DNS: 53<br/>NetworkPolicy: Egress| DNS
+    VW -->|SMTP: 25/587/465<br/>NetworkPolicy: Egress| SMTP
+    VW -->|HTTPS/HTTP: 443/80<br/>NetworkPolicy: Egress| ExtServices
+    
+    PG1 <-->|Replication: 5432<br/>NetworkPolicy: Ingress/Egress| PG2
+    PG1 -->|DNS: 53<br/>NetworkPolicy: Egress| DNS
+    PG2 -->|DNS: 53<br/>NetworkPolicy: Egress| DNS
+    
+    PG1 -.->|Backup: 443<br/>NetworkPolicy: Egress<br/>Optional| S3
+    PG2 -.->|Backup: 443<br/>NetworkPolicy: Egress<br/>Optional| S3
+    
+    CNPGOp -->|Management: 5432, 8000<br/>NetworkPolicy: Ingress| PG1
+    CNPGOp -->|Management: 5432, 8000<br/>NetworkPolicy: Ingress| PG2
+    
+    Prometheus -.->|Metrics: 3000<br/>NetworkPolicy: Ingress<br/>Optional| VW
+    Prometheus -.->|Metrics: 9187<br/>NetworkPolicy: Ingress<br/>Optional| PG1
+    Prometheus -.->|Metrics: 9187<br/>NetworkPolicy: Ingress<br/>Optional| PG2
+
+    classDef forgejoStyle fill:#326CE5,stroke:#fff,stroke-width:2px,color:#fff
+    classDef postgresStyle fill:#336791,stroke:#fff,stroke-width:2px,color:#fff
+    classDef ingressStyle fill:#00D9FF,stroke:#fff,stroke-width:2px,color:#000
+    classDef monitoringStyle fill:#E6522C,stroke:#fff,stroke-width:2px,color:#fff
+    classDef externalStyle fill:#FF6B6B,stroke:#fff,stroke-width:2px,color:#fff
+    classDef systemStyle fill:#4CAF50,stroke:#fff,stroke-width:2px,color:#fff
+
+    class VW,VWPod forgejoStyle
+    class PG1,PG2,CNPGCluster postgresStyle
+    class Ingress,IngressNS ingressStyle
+    class Prometheus,MonitoringNS monitoringStyle
+    class Users,SMTP,ExtServices,S3,Internet externalStyle
+    class DNS,SystemNS,CNPGOp,CNPGNS systemStyle
+```
+
+### Network Flow Legend
+
+- **Solid lines**: Required network flows
+- **Dashed lines**: Optional network flows (configurable)
+- **NetworkPolicy labels**: Indicate which NetworkPolicy rule controls the flow
+
+### Key Components
+
+1. **Forgejo Application**
+   - Receives traffic from Ingress Controller on port 3000
+   - Connects to PostgreSQL database on port 5432
+   - Sends emails via SMTP servers
+   - Accesses external services for push notifications and updates
+
+2. **CloudNativePG Cluster**
+   - Managed by CNPG operator
+   - Supports high availability with primary/replica instances
+   - Replication between instances on port 5432
+   - Optional backup to Object Storage (S3-compatible)
+
+3. **Network Policies**
+   - Control ingress and egress traffic for both forgejo and PostgreSQL
+   - Disabled by default for compatibility
+   - Enable with `networkPolicy.forgejo.enabled` and `networkPolicy.postgresql.enabled`
+
+4. **Monitoring (Optional)**
+   - Prometheus can scrape metrics from both forgejo and PostgreSQL
+   - Requires enabling monitoring in NetworkPolicy configuration
+
 ## Install Forgejo
 
 ### Install CloudNativePG Operator
@@ -80,7 +188,7 @@ helm install cert-manager jetstack/cert-manager \
 | `rootURL`                                           | UI Root URL (for link generation)                                                                                                                                                                          | `""`                      |
 | `command`                                           | Override default container command (useful when using custom images)                                                                                                                                       | `[]`                      |
 | `args`                                              | Override default container args (useful when using custom images)                                                                                                                                          | `[]`                      |
-| `updateStrategy.type`                               | Update strategy - only really applicable for deployments with RWO PVs attached                                                                                                                             | `RollingUpdate`           |
+| `updateStrategy.type`                               | Update strategy - only really applicable for deployments with RWO PVs attached                                                                                                                             | `Recreate`                |
 | `replicaCount`                                      | Number of Forgejo replicas to deploy                                                                                                                                                                       | `1`                       |
 | `priorityClassName`                                 | Forgejo pods' priorityClassName                                                                                                                                                                            | `""`                      |
 | `schedulerName`                                     | Name of the k8s scheduler (other than default)                                                                                                                                                             | `""`                      |
@@ -216,34 +324,62 @@ helm install cert-manager jetstack/cert-manager \
 | `serviceAccount.automountServiceAccountToken` | Auto-mount the service account token in the pod          | `false` |
 | `serviceAccount.annotations`                  | Additional custom annotations for the ServiceAccount     | `{}`    |
 
+### NetworkPolicy Configuration
+
+| Name                                                                    | Description                                                                        | Value                  |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------- |
+| `networkPolicy.forgejo.enabled`                                         | Enable NetworkPolicy for forgejo                                                   | `true`                 |
+| `networkPolicy.forgejo.ingress.fromIngressController.enabled`           | Allow traffic from Ingress Controller                                              | `true`                 |
+| `networkPolicy.forgejo.ingress.fromIngressController.namespaceSelector` | Namespace selector for Ingress Controller                                          | `{}`                   |
+| `networkPolicy.forgejo.ingress.fromIngressController.podSelector`       | Pod selector for Ingress Controller                                                | `{}`                   |
+| `networkPolicy.forgejo.ingress.fromMonitoring.enabled`                  | Allow traffic from monitoring namespace                                            | `true`                 |
+| `networkPolicy.forgejo.ingress.fromMonitoring.namespaceSelector`        | Namespace selector for monitoring                                                  | `{}`                   |
+| `networkPolicy.forgejo.ingress.fromMonitoring.podSelector`              | Pod selector for monitoring                                                        | `{}`                   |
+| `networkPolicy.forgejo.egress.toSMTP.enabled`                           | Allow traffic to SMTP servers                                                      | `true`                 |
+| `networkPolicy.forgejo.egress.toSMTP.ports`                             | SMTP ports to allow                                                                | `[]`                   |
+| `networkPolicy.forgejo.egress.toSMTP.cidrBlocks`                        | CIDR blocks to SMTP                                                                | `["0.0.0.0/0","::/0"]` |
+| `networkPolicy.forgejo.egress.toInternet.enabled`                       | Allow traffic to Internet                                                          | `true`                 |
+| `networkPolicy.forgejo.egress.toInternet.cidrBlocks`                    | CIDR blocks to Internet                                                            | `["0.0.0.0/0","::/0"]` |
+| `networkPolicy.forgejo.egress.toInternet.ports`                         | Internet ports to allow                                                            | `[]`                   |
+| `networkPolicy.forgejo.egress.extraEgress`                              | Add extra ingress rules to the NetworkPolicy (ignored if allowExternalEgress=true) | `[]`                   |
+
 ### Database parameters
 
-| Name                                         | Description                                                             | Value     |
-| -------------------------------------------- | ----------------------------------------------------------------------- | --------- |
-| `postgresql.enabled`                         | Enable CloudNativePG cluster deployment                                 | `true`    |
-| `postgresql.instances`                       | Number of PostgreSQL instances (1 for single instance)                  | `1`       |
-| `postgresql.storage.size`                    | Storage size for PostgreSQL data                                        | `10Gi`    |
-| `postgresql.storage.storageClass`            | Storage class for PostgreSQL PVCs                                       | `""`      |
-| `postgresql.storage.pvcTemplate`             | Additional PVC template configuration for PostgreSQL PVCs               | `{}`      |
-| `postgresql.database.name`                   | Database name                                                           | `forgejo` |
-| `postgresql.database.username`               | Database username                                                       | `forgejo` |
-| `postgresql.database.existingSecret`         | Existing secret with database credentials                               | `""`      |
-| `postgresql.resources`                       | Resource requests and limits for PostgreSQL pod                         | `{}`      |
-| `postgresql.affinity`                        | Affinity configuration for PostgreSQL pod                               | `{}`      |
-| `postgresql.tolerations`                     | Tolerations for PostgreSQL pod                                          | `{}`      |
-| `postgresql.nodeSelector`                    | Node selector for PostgreSQL pod                                        | `{}`      |
-| `postgresql.monitoring.enabled`              | Enable monitoring with PodMonitor                                       | `true`    |
-| `postgresql.backup.enabled`                  | Enable Barman plugin WAL backup configuration                           | `false`   |
-| `postgresql.backup.barmanObjectName`         | Barman ObjectStore name for backup                                      | `""`      |
-| `postgresql.superuserSecret`                 | Secret containing superuser credentials for the cluster                 | `""`      |
-| `postgresql.tls.enabled`                     | Enable TLS encryption for the cluster (requires cert-manager)           | `true`    |
-| `externalDatabase.host`                      | Database host                                                           | `""`      |
-| `externalDatabase.port`                      | Database port number                                                    | `5432`    |
-| `externalDatabase.username`                  | Non-root username for forgejo                                           | `forgejo` |
-| `externalDatabase.password`                  | Password for the non-root username for forgejo                          | `""`      |
-| `externalDatabase.database`                  | forgejo database name                                                   | `forgejo` |
-| `externalDatabase.existingSecret`            | Name of an existing secret resource containing the database credentials | `""`      |
-| `externalDatabase.existingSecretPasswordKey` | Name of an existing secret key containing the database credentials      | `""`      |
+| Name                                              | Description                                                                                        | Value     |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------- |
+| `postgresql.enabled`                              | Enable CloudNativePG cluster deployment                                                            | `true`    |
+| `postgresql.instances`                            | Number of PostgreSQL instances (1 for single instance)                                             | `1`       |
+| `postgresql.storage.size`                         | Storage size for PostgreSQL data                                                                   | `10Gi`    |
+| `postgresql.storage.storageClass`                 | Storage class for PostgreSQL PVCs                                                                  | `""`      |
+| `postgresql.storage.pvcTemplate`                  | Additional PVC template configuration for PostgreSQL PVCs                                          | `{}`      |
+| `postgresql.database.name`                        | Database name                                                                                      | `forgejo` |
+| `postgresql.database.username`                    | Database username                                                                                  | `forgejo` |
+| `postgresql.database.existingSecret`              | Existing secret with database credentials                                                          | `""`      |
+| `postgresql.resources`                            | Resource requests and limits for PostgreSQL pod                                                    | `{}`      |
+| `postgresql.affinity`                             | Affinity configuration for PostgreSQL pod                                                          | `{}`      |
+| `postgresql.tolerations`                          | Tolerations for PostgreSQL pod                                                                     | `{}`      |
+| `postgresql.nodeSelector`                         | Node selector for PostgreSQL pod                                                                   | `{}`      |
+| `postgresql.backup.enabled`                       | Enable Barman plugin WAL backup configuration                                                      | `false`   |
+| `postgresql.backup.barmanObjectName`              | Barman ObjectStore name for backup                                                                 | `""`      |
+| `postgresql.superuserSecret`                      | Secret containing superuser credentials for the cluster                                            | `""`      |
+| `postgresql.tls.enabled`                          | Enable TLS encryption for the cluster (requires cert-manager)                                      | `true`    |
+| `postgresql.metrics.podMonitor.enabled`           | if `true`, creates a Prometheus Operator podMonitor (also requires `metrics.enabled` to be `true`) | `true`    |
+| `postgresql.metrics.podMonitor.namespace`         | Namespace in which Prometheus is running                                                           | `""`      |
+| `postgresql.metrics.podMonitor.annotations`       | Additional custom annotations for the podMonitor                                                   | `{}`      |
+| `postgresql.metrics.podMonitor.labels`            | Extra labels for the podMonitor                                                                    | `{}`      |
+| `postgresql.metrics.podMonitor.jobLabel`          | The name of the label on the target service to use as the job name in Prometheus                   | `""`      |
+| `postgresql.metrics.podMonitor.honorLabels`       | honorLabels chooses the metric's labels on collisions with target labels                           | `false`   |
+| `postgresql.metrics.podMonitor.interval`          | Interval at which metrics should be scraped.                                                       | `""`      |
+| `postgresql.metrics.podMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                                            | `""`      |
+| `postgresql.metrics.podMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                           | `[]`      |
+| `postgresql.metrics.podMonitor.relabelings`       | Specify general relabeling                                                                         | `[]`      |
+| `externalDatabase.host`                           | Database host                                                                                      | `""`      |
+| `externalDatabase.port`                           | Database port number                                                                               | `5432`    |
+| `externalDatabase.username`                       | Non-root username for forgejo                                                                      | `forgejo` |
+| `externalDatabase.password`                       | Password for the non-root username for forgejo                                                     | `""`      |
+| `externalDatabase.database`                       | forgejo database name                                                                              | `forgejo` |
+| `externalDatabase.existingSecret`                 | Name of an existing secret resource containing the database credentials                            | `""`      |
+| `externalDatabase.existingSecretPasswordKey`      | Name of an existing secret key containing the database credentials                                 | `""`      |
 
 ### SMTP Configuration
 
@@ -293,6 +429,23 @@ helm install cert-manager jetstack/cert-manager \
 | `auxiliaryImage.digest`      | Auxiliary image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag | `""`                         |
 | `auxiliaryImage.pullPolicy`  | Auxiliary image pull policy                                                                               | `IfNotPresent`               |
 | `auxiliaryImage.pullSecrets` | Auxiliary image pull secrets                                                                              | `[]`                         |
+
+### Prometheus metrics
+
+| Name                                       | Description                                                                                            | Value   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------- |
+| `metrics.enabled`                          | Enable the export of Prometheus metrics                                                                | `true`  |
+| `metrics.serviceMonitor.enabled`           | if `true`, creates a Prometheus Operator ServiceMonitor (also requires `metrics.enabled` to be `true`) | `true`  |
+| `metrics.serviceMonitor.namespace`         | Namespace in which Prometheus is running                                                               | `""`    |
+| `metrics.serviceMonitor.annotations`       | Additional custom annotations for the ServiceMonitor                                                   | `{}`    |
+| `metrics.serviceMonitor.labels`            | Extra labels for the ServiceMonitor                                                                    | `{}`    |
+| `metrics.serviceMonitor.jobLabel`          | The name of the label on the target service to use as the job name in Prometheus                       | `""`    |
+| `metrics.serviceMonitor.honorLabels`       | honorLabels chooses the metric's labels on collisions with target labels                               | `false` |
+| `metrics.serviceMonitor.interval`          | Interval at which metrics should be scraped.                                                           | `""`    |
+| `metrics.serviceMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                                                | `""`    |
+| `metrics.serviceMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                               | `[]`    |
+| `metrics.serviceMonitor.relabelings`       | Specify general relabeling                                                                             | `[]`    |
+| `metrics.serviceMonitor.selector`          | Prometheus instance selector labels                                                                    | `{}`    |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -405,16 +558,8 @@ N/A
 
 ## License
 
-Copyright &copy; 2024 Broadcom. The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+[MIT](./LICENSE).
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+## Author
 
-<http://www.apache.org/licenses/LICENSE-2.0>
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+This Helm chart was created and is being maintained by @captnbp.

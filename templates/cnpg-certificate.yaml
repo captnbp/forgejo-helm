@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "forgejo.cnp.fullname" . }}-crt
+  name: {{ include "forgejo.postgresql.fullname" . }}-crt
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: postgresql
@@ -22,7 +22,7 @@ spec:
     {{- if .Values.commonAnnotations }}
     annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 6 }}
     {{- end }}
-  secretName: {{ include "forgejo.cnp.fullname" . }}-crt
+  secretName: {{ include "forgejo.postgresql.fullname" . }}-crt
   duration: 4320h0m0s # 180d
   renewBefore: 2160h0m0s # 90d
   dnsNames:

@@ -1,12 +1,4 @@
 {{/*
-Create a default fully qualified postgresql name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "forgejo.postgresql.fullname" -}}
-{{- include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) -}}
-{{- end -}}
-
-{{/*
 Return the proper Forgejo image name
 */}}
 {{- define "forgejo.image" -}}
@@ -95,7 +87,7 @@ Return the SMTP Secret Name
 {{/*
 Return the CNP cluster fullname
 */}}
-{{- define "forgejo.cnp.fullname" -}}
+{{- define "forgejo.postgresql.fullname" -}}
 {{- if .Values.postgresql.name -}}
 {{- .Values.postgresql.name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -106,26 +98,26 @@ Return the CNP cluster fullname
 {{/*
 Return the CNP cluster service name (read-write)
 */}}
-{{- define "forgejo.cnp.serviceName" -}}
-{{- printf "%s-rw" (include "forgejo.cnp.fullname" .) -}}
+{{- define "forgejo.postgresql.serviceName" -}}
+{{- printf "%s-rw" (include "forgejo.postgresql.fullname" .) -}}
 {{- end -}}
 
 {{/*
 Return the CNP secret name
 */}}
-{{- define "forgejo.cnp.secretName" -}}
+{{- define "forgejo.postgresql.secretName" -}}
 {{- if .Values.postgresql.database.existingSecret -}}
 {{- .Values.postgresql.database.existingSecret -}}
 {{- else -}}
-{{- printf "%s-app" (include "forgejo.cnp.fullname" .) -}}
+{{- printf "%s-app" (include "forgejo.postgresql.fullname" .) -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Return the CNP database password
 */}}
-{{- define "forgejo.cnp.password" -}}
-{{- $secretData := (lookup "v1" "Secret" $.Release.Namespace (include "forgejo.cnp.secretName" .)).data }}
+{{- define "forgejo.postgresql.password" -}}
+{{- $secretData := (lookup "v1" "Secret" $.Release.Namespace (include "forgejo.postgresql.secretName" .)).data }}
 {{- if and $secretData (hasKey $secretData "password") }}
 {{- index $secretData "password" | b64dec }}
 {{- else }}
@@ -140,7 +132,7 @@ Get the database host
 {{- if .Values.postgresql.enabled -}}
 {{- $releaseNamespace := .Release.Namespace }}
 {{- $clusterDomain := .Values.clusterDomain }}
-{{- $serviceName := include "forgejo.cnp.serviceName" . }}
+{{- $serviceName := include "forgejo.postgresql.serviceName" . }}
 {{- printf "%s.%s.svc.%s" $serviceName $releaseNamespace $clusterDomain -}}
 {{- else -}}
 {{- .Values.externalDatabase.host -}}
@@ -185,7 +177,7 @@ Get the Postgresql credentials secret.
 */}}
 {{- define "forgejo.databaseSecretName" -}}
 {{- if .Values.postgresql.enabled -}}
-{{- include "forgejo.cnp.secretName" . -}}
+{{- include "forgejo.postgresql.secretName" . -}}
 {{- else -}}
 {{- default (printf "%s-externaldb" .Release.Name) (tpl .Values.externalDatabase.existingSecret $) -}}
 {{- end -}}
