@@ -1,0 +1,124 @@
+name: Helm CI/CD
+
+on:
+  push:
+    branches: [ main, release/** ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    enable-openid-connect: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v5.0.0
+        #with:
+        #  version: 'v3.18.3'
+      - name: Check Helm install
+        run: helm version
+
+      - name: Setup Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+      - name: Check Cosign install
+        run: cosign version
+
+      # - name: Setup Vault
+      #   uses: hashicorp/setup-vault@v1
+      #   with:
+      #     version: '1.15.0'
+
+      - name: Setup curl and jq
+        run: apt-get update && apt-get install -y curl jq
+
+      # Étape 1: Helm Lint (peut être exécutée avant l'auth Vault)
+      - name: Helm Lint
+        run: helm lint .
+
+      # Étape 2: Récupérer le JWT depuis Forgejo OIDC
+      - name: Get JWT from Forgejo OIDC
+        id: get-jwt
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+        run: |
+          # Récupérer le JWT via l'API Forgejo
+          # ACTIONS_ID_TOKEN_REQUEST_TOKEN et ACTIONS_ID_TOKEN_REQUEST_URL sont automatiquement injectés
+          JWT=$(curl -s -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${VAULT_ADDR}")
+          
+          # Sauvegarder le JWT pour les étapes suivantes
+          echo "jwt=$JWT" >> $FORGEJO_OUTPUT
+        
+      # Étape 3: Authentification à Vault via JWT OIDC
+      - name: Authenticate to Vault using JWT
+        id: vault-auth
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+        run: |
+          # Récupérer le JWT depuis l'étape précédente
+          JWT=${{ steps.get-jwt.outputs.jwt }}
+          
+          # Authentification à Vault avec ce JWT
+          VAULT_TOKEN=$(VAULT_ADDR=$VAULT_ADDR vault write -field=token auth/jwt/login role=$(echo ${FORGEJO_REPOSITORY} | awk -F/ '{print $NF}') jwt=$JWT)
+          
+          # Exporter le token Vault pour les étapes suivantes
+          echo "VAULT_TOKEN=${VAULT_TOKEN}" >> ${FORGEJO_ENV}
+
+      # Étape 4: Récupérer les credentials OCI depuis Vault
+      - name: Get OCI Credentials from Vault
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_TOKEN: ${{ env.VAULT_TOKEN }}
+        run: |
+          # Récupérer les credentials depuis Vault KV v2
+          OCI_CREDENTIALS=$(VAULT_TOKEN=${VAULT_TOKEN} VAULT_ADDR=$VAULT_ADDR vault kv get -format=json kv/oci/docker-hub | jq -r '.data.data')
+          OCI_USERNAME=$(echo ${OCI_CREDENTIALS} | jq -r '.username')
+          OCI_PASSWORD=$(echo ${OCI_CREDENTIALS} | jq -r '.token')
+          
+          # Exporter pour les étapes suivantes
+          echo "OCI_USERNAME=${OCI_USERNAME}" >> ${FORGEJO_ENV}
+          echo "OCI_PASSWORD=${OCI_PASSWORD}" >> ${FORGEJO_ENV}
+
+      # Étape 5: Login au registry OCI
+      - name: Login to OCI Registry
+        run: |
+          echo "${OCI_PASSWORD}" | helm registry login registry-1.docker.io \
+            --username ${OCI_USERNAME} \
+            --password-stdin
+
+      # Étape 6: Packager le chart
+      - name: Package Helm Chart
+        run: |
+          CHART_NAME=$(helm show chart . | grep "^name:" | awk '{print $2}')
+          CHART_VERSION=$(helm show chart . | grep "^version:" | awk '{print $2}')
+          PACKAGE_NAME=${CHART_NAME}-${CHART_VERSION}.tgz
+          helm package --dependency-update .
+          helm package .
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> ${FORGEJO_ENV}
+
+      # Étape 7: Publier sur OCI Registry
+      - name: Push to OCI Registry
+        run: |
+          helm push $PACKAGE_NAME oci://registry-1.docker.io/captnbp 2> chart-digest-dockerhub.txt
+          CHART_URL=$(grep "Pushed" chart-digest-dockerhub.txt | cut -d' ' -f2)
+          CHART_DIGEST=$(grep "Digest" chart-digest-dockerhub.txt | cut -d' ' -f2)
+          rm chart-digest-dockerhub.txt
+          echo "CHART_URL=${CHART_URL}" >> ${FORGEJO_ENV}
+
+      # Étape 8: Signer avec Cosign en utilisant Vault Transit
+      - name: Sign with Cosign using Vault Transit
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_TOKEN: ${{ env.VAULT_TOKEN }}
+        run: |
+          docker login --username ${OCI_USERNAME} --password "${OCI_PASSWORD}" registry-1.docker.io
+          CHART_URL=$(grep "Pushed" chart-digest-dockerhub.txt | cut -d' ' -f2)
+          CHART_DIGEST=$(grep "Digest" chart-digest-dockerhub.txt | cut -d' ' -f2)
+          cosign sign --new-bundle-format -a sig=gitlab-ci -y --upload=true --tlog-upload=true --key hashivault://cosign ${CHART_URL}@${CHART_DIGEST}
+
