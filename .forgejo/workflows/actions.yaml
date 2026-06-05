@@ -66,6 +66,7 @@ jobs:
         run: |
           # Récupérer le JWT depuis l'étape précédente
           JWT=${{ steps.get-jwt.outputs.jwt }}
+          echo $JWT
           
           # Authentification à Vault avec ce JWT
           VAULT_TOKEN=$(VAULT_ADDR=$VAULT_ADDR vault write -field=token auth/jwt/${VAULT_HOSTNAME}/login role=$(echo ${FORGEJO_REPOSITORY} | awk -F/ '{print $NF}') jwt=$JWT)
