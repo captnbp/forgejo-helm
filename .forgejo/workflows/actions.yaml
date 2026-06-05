@@ -62,6 +62,7 @@ jobs:
         id: vault-auth
         env:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_HOSTNAME: ${{ secrets.VAULT_HOSTNAME }}
         run: |
           # Récupérer le JWT depuis l'étape précédente
           JWT=${{ steps.get-jwt.outputs.jwt }}
