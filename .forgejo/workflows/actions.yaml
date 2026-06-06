@@ -61,8 +61,8 @@ jobs:
         id: meta
         run: |
           set -euo pipefail
-          CHART_NAME=$(helm show chart . --format '{{.Name}}')
-          CHART_VERSION=$(helm show chart . --format '{{.Version}}')
+          CHART_NAME=$(helm show chart . | grep "^name:" | awk '{print $2}')
+          CHART_VERSION=$(helm show chart . | grep "^version:" | awk '{print $2}')
           echo "chart_name=${CHART_NAME}" >> ${FORGEJO_OUTPUT}
           echo "chart_version=${CHART_VERSION}" >> ${FORGEJO_OUTPUT}
           echo "::debug::Chart: ${CHART_NAME} v${CHART_VERSION}"
