@@ -78,7 +78,7 @@ jobs:
           echo "::debug::Package name: ${PACKAGE_NAME}"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v7
+        uses: forgejo/upload-artifact@v4
         with:
           name: helm-chart
           path: ${{ steps.package.outputs.package_name }}
@@ -94,7 +94,7 @@ jobs:
       chart_digest: ${{ steps.push.outputs.chart_digest }}
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v8
+        uses: forgejo/download-artifact@v7
         with:
           name: helm-chart
 
