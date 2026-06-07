@@ -7,4 +7,3 @@ on:
 jobs:
   lint-test:
     uses: doca/workflows/.forgejo/workflows/helm-test.yaml@main
-    secrets: inherit
