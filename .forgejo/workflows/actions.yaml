@@ -2,9 +2,6 @@ name: Helm CI/CD
 
 on:
   push:
-    branches: [ main, release/** ]
-    tags: [ 'v*' ]
-  pull_request:
     branches: [ main ]
 
 env:
@@ -141,7 +138,7 @@ jobs:
             echo "::error::Failed to retrieve OCI credentials"
             exit 1
           fi
-          echo "::add-mask::${OCI_USERNAME}"
+          #echo "::add-mask::${OCI_USERNAME}"
           echo "::add-mask::${OCI_PASSWORD}"
           echo "OCI_USERNAME=${OCI_USERNAME}" >> $FORGEJO_ENV
           echo "OCI_PASSWORD=${OCI_PASSWORD}" >> $FORGEJO_ENV
