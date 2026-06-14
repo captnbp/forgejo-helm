@@ -58,7 +58,7 @@ extraDeploy: []
 image:
   registry: codeberg.org
   repository: forgejo/forgejo
-  tag: 15.0.2-rootless
+  tag: 15.0.3-rootless
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
