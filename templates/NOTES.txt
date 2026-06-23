@@ -128,8 +128,7 @@ Access the pod you want to debug by executing:
 
 4. Application Configuration:
 
-  Application URL: {{ .Values.forgejo.url | default (printf "https://%s" $ingressHost) }}
-  Telemetry: {{ if .Values.forgejo.disableTelemetry }}DISABLED{{ else }}ENABLED{{ end }}
+  Application URL: {{ .Values.rootURL | default (printf "https://%s" $ingressHost) }}
 
 {{- if .Values.smtp.host }}
   
@@ -138,13 +137,6 @@ Access the pod you want to debug by executing:
   - Port: {{ .Values.smtp.port }}
   - From: {{ .Values.smtp.from }}
   - Secure: {{ .Values.smtp.secure }}
-{{- end }}
-
-{{- if .Values.oidc.enabled }}
-  
-  OIDC Authentication:
-  - Provider: {{ .Values.oidc.provider }}
-  - Issuer: {{ .Values.oidc.issuer }}
 {{- end }}
 
 5. Monitoring:

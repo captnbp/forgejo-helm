@@ -340,6 +340,16 @@ helm install cert-manager jetstack/cert-manager \
 | `networkPolicy.forgejo.egress.toInternet.cidrBlocks`                    | CIDR blocks to Internet                                                            | `["0.0.0.0/0","::/0"]` |
 | `networkPolicy.forgejo.egress.toInternet.ports`                         | Internet ports to allow                                                            | `[]`                   |
 | `networkPolicy.forgejo.egress.extraEgress`                              | Add extra ingress rules to the NetworkPolicy (ignored if allowExternalEgress=true) | `[]`                   |
+| `networkPolicy.postgresql.enabled`                                      | Enable NetworkPolicy for PostgreSQL CNPG                                           | `true`                 |
+| `networkPolicy.postgresql.ingress.fromMonitoring.enabled`               | Allow traffic from monitoring namespace                                            | `true`                 |
+| `networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector`     | Namespace selector for monitoring                                                  | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromMonitoring.podSelector`           | Pod selector for monitoring                                                        | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromPostgresqlInstances.enabled`      | Allow traffic between PostgreSQL instances                                         | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.enabled`                     | Allow traffic from CNPG operator                                                   | `true`                 |
+| `networkPolicy.postgresql.ingress.fromCNPG.namespaceSelector`           | Namespace selector for CNPG operator                                               | `{}`                   |
+| `networkPolicy.postgresql.ingress.fromCNPG.podSelector`                 | Pod selector for CNPG operator                                                     | `{}`                   |
+| `networkPolicy.postgresql.egress.toObjectStorage.enabled`               | Allow traffic to Object Storage for backups                                        | `false`                |
+| `networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks`            | CIDR blocks for Object Storage                                                     | `["0.0.0.0/0","::/0"]` |
 
 ### Database parameters
 

@@ -753,6 +753,55 @@ networkPolicy:
       ##
       extraEgress: []
 
+  ## @param networkPolicy.postgresql.enabled Enable NetworkPolicy for PostgreSQL CNPG
+  ##
+  postgresql:
+    enabled: true
+    
+    ## Ingress rules configuration
+    ##
+    ingress:      
+      ## @param networkPolicy.postgresql.ingress.fromMonitoring.enabled Allow traffic from monitoring namespace
+      ## @param networkPolicy.postgresql.ingress.fromMonitoring.namespaceSelector [object] Namespace selector for monitoring
+      ## @param networkPolicy.postgresql.ingress.fromMonitoring.podSelector [object] Pod selector for monitoring
+      ##
+      fromMonitoring:
+        enabled: true
+        namespaceSelector:
+          kubernetes.io/metadata.name: kube-prometheus-stack
+        podSelector:
+          app.kubernetes.io/instance: kube-prometheus-stack-prometheus
+          app.kubernetes.io/name: prometheus
+          prometheus: kube-prometheus-stack-prometheus
+      
+      ## @param networkPolicy.postgresql.ingress.fromPostgresqlInstances.enabled Allow traffic between PostgreSQL instances
+      ##
+      fromPostgresqlInstances:
+        enabled: true
+      
+      ## @param networkPolicy.postgresql.ingress.fromCNPG.enabled Allow traffic from CNPG operator
+      ## @param networkPolicy.postgresql.ingress.fromCNPG.namespaceSelector [object] Namespace selector for CNPG operator
+      ## @param networkPolicy.postgresql.ingress.fromCNPG.podSelector [object] Pod selector for CNPG operator
+      ##
+      fromCNPG:
+        enabled: true
+        namespaceSelector:
+          kubernetes.io/metadata.name: cnpg-system
+        podSelector:
+          app.kubernetes.io/name: cloudnative-pg
+    
+    ## Egress rules configuration
+    ##
+    egress:
+      ## @param networkPolicy.postgresql.egress.toObjectStorage.enabled Allow traffic to Object Storage for backups
+      ## @param networkPolicy.postgresql.egress.toObjectStorage.cidrBlocks CIDR blocks for Object Storage
+      ##
+      toObjectStorage:
+        enabled: false
+        cidrBlocks:
+          - 0.0.0.0/0
+          - ::/0
+
 ## @section Database parameters
 
 ## CloudNativePG Cluster configuration
