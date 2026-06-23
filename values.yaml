@@ -754,6 +754,7 @@ networkPolicy:
 ## @param postgresql.storage.pvcTemplate Additional PVC template configuration for PostgreSQL PVCs
 ## @param postgresql.database.name Database name
 ## @param postgresql.database.username Database username
+## @param postgresql.database.password Database password
 ## @param postgresql.database.existingSecret Existing secret with database credentials
 ## @param postgresql.resources Resource requests and limits for PostgreSQL pod
 ## @param postgresql.affinity Affinity configuration for PostgreSQL pod
@@ -780,6 +781,7 @@ postgresql:
   database:
     name: forgejo
     username: forgejo
+    password: ""
     existingSecret: ""
   resources: {}
   affinity: {}
@@ -825,9 +827,88 @@ postgresql:
       ## @param postgresql.metrics.podMonitor.relabelings Specify general relabeling
       ##
       relabelings: []
+
   backup:
-    enabled: false
+    ## @param postgresql.backup.enabled Enable Barman plugin WAL backup configuration
+    ##
+    enabled: true
+    ## @param postgresql.backup.barmanObjectName Barman ObjectStore name for backup of an existing ObjectStore
     barmanObjectName: ""
+    ## ref: https://cloudnative-pg.io/docs/1.29/backup#scheduled-backups
+    schedule:
+      ## @param postgresql.backup.schedule.enabled Enable scheduled backups for the cluster
+      ##
+      enabled: true
+      ## @param postgresql.backup.schedule.cron Cron expression for the backup schedule
+      ##
+      cron: "0 0 0 * * *"  # At midnight every day
+      ## @param postgresql.backup.schedule.backupOwnerReference Backup owner reference for the backup schedule (self or cluster)
+      ## ref: https://cloudnative-pg.io/docs/1.29/backup#scheduled-backups
+      ##
+      backupOwnerReference: "self"
+      ## @param postgresql.backup.schedule.method Backup method for the backup schedule (plugin, volumeSnapshot, or barmanObjectStore (default))
+      ## ref: https://cloudnative-pg.io/docs/1.29/backup#backup-methods
+      method: "plugin"
+
+  ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/object_stores/
+  barmanObjectStore:
+    ## @param postgresql.barmanObjectStore.enabled Enable Barman ObjectStore configuration
+    enabled: true
+    ## @param postgresql.barmanObjectStore.destinationPath ObjectStore destination path
+    ## Format depends on provider: s3://bucket/path, azure://container/path, gs://bucket/path
+    destinationPath: ""
+    ## @param postgresql.barmanObjectStore.endpointUrl ObjectStore endpoint URL (only for S3-compatible providers)
+    endpointUrl: ""
+    wal:
+      ## @param postgresql.barmanObjectStore.wal.compression Compression algorithm for WAL files (bzip2, gzip, lz4, snappy, zx, zstd, or none)
+      ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/compression/
+      ##
+      compression: "bzip2"
+      ## @param postgresql.barmanObjectStore.wal.retentionPolicy Retention policy for WAL files (e.g., "30d" for 30 days)
+      ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/retention
+      retentionPolicy: "30d"
+    ## S3 Credentials Configuration
+    s3Credentials:
+      accessKeyId:
+        ## @param postgresql.barmanObjectStore.s3Credentials.accessKeyId.name Name of the Kubernetes secret containing the S3 access key ID
+        ## @param postgresql.barmanObjectStore.s3Credentials.accessKeyId.key Key in the secret containing the S3 access key ID
+        name: ""
+        key: "ACCESS_KEY_ID"
+      secretAccessKey:
+        ## @param postgresql.barmanObjectStore.s3Credentials.secretAccessKey.name Name of the Kubernetes secret containing the S3 secret access key
+        ## @param postgresql.barmanObjectStore.s3Credentials.secretAccessKey.key Key in the secret containing the S3 secret access key
+        name: ""
+        key: "ACCESS_SECRET_KEY"
+    ## Azure Credentials Configuration
+    azureCredentials:
+      connectionString:
+        ## @param postgresql.barmanObjectStore.azureCredentials.connectionString.name Name of the Kubernetes secret containing the Azure connection string
+        ## @param postgresql.barmanObjectStore.azureCredentials.connectionString.key Key in the secret containing the Azure connection string
+        name: ""
+        key: "CONNECTION_STRING"
+    ## GCS Credentials Configuration
+    gcsCredentials:
+      applicationCredentials:
+        ## @param postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.name Name of the Kubernetes secret containing the GCS application credentials
+        ## @param postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.key Key in the secret containing the GCS application credentials
+        name: ""
+        key: "APPLICATION_CREDENTIALS"
+  
+  ## @param postgresql.extraPlugins [array] Add extra plugins to the CloudNativePG cluster.
+  ##
+  extraPlugins: []
+  ## @param postgresql.externalClusters [array] Add external clusters to the CloudNativePG cluster to restore a cluster from an object store
+  ## ref: https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/#restoring-a-cluster
+  ## e.g:
+  ## - name: source
+  ##   plugin:
+  ##     name: barman-cloud.cloudnative-pg.io
+  ##     parameters:
+  ##       # Recovery Object Store (pull, read-only)
+  ##       barmanObjectName: minio-store
+  ##       serverName: cluster-example
+  ##
+  externalClusters: []
   superuserSecret: ""
   tls:
     enabled: true

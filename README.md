@@ -340,41 +340,64 @@ helm install cert-manager jetstack/cert-manager \
 
 ### Database parameters
 
-| Name                                              | Description                                                                                        | Value     |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------- |
-| `postgresql.enabled`                              | Enable CloudNativePG cluster deployment                                                            | `true`    |
-| `postgresql.instances`                            | Number of PostgreSQL instances (1 for single instance)                                             | `1`       |
-| `postgresql.storage.size`                         | Storage size for PostgreSQL data                                                                   | `10Gi`    |
-| `postgresql.storage.storageClass`                 | Storage class for PostgreSQL PVCs                                                                  | `""`      |
-| `postgresql.storage.pvcTemplate`                  | Additional PVC template configuration for PostgreSQL PVCs                                          | `{}`      |
-| `postgresql.database.name`                        | Database name                                                                                      | `forgejo` |
-| `postgresql.database.username`                    | Database username                                                                                  | `forgejo` |
-| `postgresql.database.existingSecret`              | Existing secret with database credentials                                                          | `""`      |
-| `postgresql.resources`                            | Resource requests and limits for PostgreSQL pod                                                    | `{}`      |
-| `postgresql.affinity`                             | Affinity configuration for PostgreSQL pod                                                          | `{}`      |
-| `postgresql.tolerations`                          | Tolerations for PostgreSQL pod                                                                     | `{}`      |
-| `postgresql.nodeSelector`                         | Node selector for PostgreSQL pod                                                                   | `{}`      |
-| `postgresql.backup.enabled`                       | Enable Barman plugin WAL backup configuration                                                      | `false`   |
-| `postgresql.backup.barmanObjectName`              | Barman ObjectStore name for backup                                                                 | `""`      |
-| `postgresql.superuserSecret`                      | Secret containing superuser credentials for the cluster                                            | `""`      |
-| `postgresql.tls.enabled`                          | Enable TLS encryption for the cluster (requires cert-manager)                                      | `true`    |
-| `postgresql.metrics.podMonitor.enabled`           | if `true`, creates a Prometheus Operator podMonitor (also requires `metrics.enabled` to be `true`) | `true`    |
-| `postgresql.metrics.podMonitor.namespace`         | Namespace in which Prometheus is running                                                           | `""`      |
-| `postgresql.metrics.podMonitor.annotations`       | Additional custom annotations for the podMonitor                                                   | `{}`      |
-| `postgresql.metrics.podMonitor.labels`            | Extra labels for the podMonitor                                                                    | `{}`      |
-| `postgresql.metrics.podMonitor.jobLabel`          | The name of the label on the target service to use as the job name in Prometheus                   | `""`      |
-| `postgresql.metrics.podMonitor.honorLabels`       | honorLabels chooses the metric's labels on collisions with target labels                           | `false`   |
-| `postgresql.metrics.podMonitor.interval`          | Interval at which metrics should be scraped.                                                       | `""`      |
-| `postgresql.metrics.podMonitor.scrapeTimeout`     | Timeout after which the scrape is ended                                                            | `""`      |
-| `postgresql.metrics.podMonitor.metricRelabelings` | Specify additional relabeling of metrics                                                           | `[]`      |
-| `postgresql.metrics.podMonitor.relabelings`       | Specify general relabeling                                                                         | `[]`      |
-| `externalDatabase.host`                           | Database host                                                                                      | `""`      |
-| `externalDatabase.port`                           | Database port number                                                                               | `5432`    |
-| `externalDatabase.username`                       | Non-root username for forgejo                                                                      | `forgejo` |
-| `externalDatabase.password`                       | Password for the non-root username for forgejo                                                     | `""`      |
-| `externalDatabase.database`                       | forgejo database name                                                                              | `forgejo` |
-| `externalDatabase.existingSecret`                 | Name of an existing secret resource containing the database credentials                            | `""`      |
-| `externalDatabase.existingSecretPasswordKey`      | Name of an existing secret key containing the database credentials                                 | `""`      |
+| Name                                                                      | Description                                                                                        | Value                     |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------- |
+| `postgresql.enabled`                                                      | Enable CloudNativePG cluster deployment                                                            | `true`                    |
+| `postgresql.instances`                                                    | Number of PostgreSQL instances (1 for single instance)                                             | `1`                       |
+| `postgresql.parameters`                                                   | Postgresql parameters                                                                              | `{}`                      |
+| `postgresql.storage.size`                                                 | Storage size for PostgreSQL data                                                                   | `10Gi`                    |
+| `postgresql.storage.storageClass`                                         | Storage class for PostgreSQL PVCs                                                                  | `""`                      |
+| `postgresql.storage.pvcTemplate`                                          | Additional PVC template configuration for PostgreSQL PVCs                                          | `{}`                      |
+| `postgresql.database.name`                                                | Database name                                                                                      | `forgejo`                 |
+| `postgresql.database.username`                                            | Database username                                                                                  | `forgejo`                 |
+| `postgresql.database.password`                                            | Database password                                                                                  | `""`                      |
+| `postgresql.database.existingSecret`                                      | Existing secret with database credentials                                                          | `""`                      |
+| `postgresql.resources`                                                    | Resource requests and limits for PostgreSQL pod                                                    | `{}`                      |
+| `postgresql.affinity`                                                     | Affinity configuration for PostgreSQL pod                                                          | `{}`                      |
+| `postgresql.tolerations`                                                  | Tolerations for PostgreSQL pod                                                                     | `{}`                      |
+| `postgresql.nodeSelector`                                                 | Node selector for PostgreSQL pod                                                                   | `{}`                      |
+| `postgresql.backup.enabled`                                               | Enable Barman plugin WAL backup configuration                                                      | `true`                    |
+| `postgresql.backup.barmanObjectName`                                      | Barman ObjectStore name for backup                                                                 | `""`                      |
+| `postgresql.superuserSecret`                                              | Secret containing superuser credentials for the cluster                                            | `""`                      |
+| `postgresql.tls.enabled`                                                  | Enable TLS encryption for the cluster (requires cert-manager)                                      | `true`                    |
+| `postgresql.metrics.podMonitor.enabled`                                   | if `true`, creates a Prometheus Operator podMonitor (also requires `metrics.enabled` to be `true`) | `true`                    |
+| `postgresql.metrics.podMonitor.namespace`                                 | Namespace in which Prometheus is running                                                           | `""`                      |
+| `postgresql.metrics.podMonitor.annotations`                               | Additional custom annotations for the podMonitor                                                   | `{}`                      |
+| `postgresql.metrics.podMonitor.labels`                                    | Extra labels for the podMonitor                                                                    | `{}`                      |
+| `postgresql.metrics.podMonitor.jobLabel`                                  | The name of the label on the target service to use as the job name in Prometheus                   | `""`                      |
+| `postgresql.metrics.podMonitor.honorLabels`                               | honorLabels chooses the metric's labels on collisions with target labels                           | `false`                   |
+| `postgresql.metrics.podMonitor.interval`                                  | Interval at which metrics should be scraped.                                                       | `""`                      |
+| `postgresql.metrics.podMonitor.scrapeTimeout`                             | Timeout after which the scrape is ended                                                            | `""`                      |
+| `postgresql.metrics.podMonitor.metricRelabelings`                         | Specify additional relabeling of metrics                                                           | `[]`                      |
+| `postgresql.metrics.podMonitor.relabelings`                               | Specify general relabeling                                                                         | `[]`                      |
+| `postgresql.backup.enabled`                                               | Enable Barman plugin WAL backup configuration                                                      | `true`                    |
+| `postgresql.backup.barmanObjectName`                                      | Barman ObjectStore name for backup of an existing ObjectStore                                      | `""`                      |
+| `postgresql.backup.schedule.enabled`                                      | Enable scheduled backups for the cluster                                                           | `true`                    |
+| `postgresql.backup.schedule.cron`                                         | Cron expression for the backup schedule                                                            | `0 0 0 * * *`             |
+| `postgresql.backup.schedule.backupOwnerReference`                         | Backup owner reference for the backup schedule (self or cluster)                                   | `self`                    |
+| `postgresql.backup.schedule.method`                                       | Backup method for the backup schedule (plugin, volumeSnapshot, or barmanObjectStore (default))     | `plugin`                  |
+| `postgresql.barmanObjectStore.enabled`                                    | Enable Barman ObjectStore configuration                                                            | `true`                    |
+| `postgresql.barmanObjectStore.destinationPath`                            | ObjectStore destination path                                                                       | `""`                      |
+| `postgresql.barmanObjectStore.endpointUrl`                                | ObjectStore endpoint URL (only for S3-compatible providers)                                        | `""`                      |
+| `postgresql.barmanObjectStore.wal.compression`                            | Compression algorithm for WAL files (bzip2, gzip, lz4, snappy, zx, zstd, or none)                  | `bzip2`                   |
+| `postgresql.barmanObjectStore.wal.retentionPolicy`                        | Retention policy for WAL files (e.g., "30d" for 30 days)                                           | `30d`                     |
+| `postgresql.barmanObjectStore.s3Credentials.accessKeyId.name`             | Name of the Kubernetes secret containing the S3 access key ID                                      | `""`                      |
+| `postgresql.barmanObjectStore.s3Credentials.accessKeyId.key`              | Key in the secret containing the S3 access key ID                                                  | `ACCESS_KEY_ID`           |
+| `postgresql.barmanObjectStore.s3Credentials.secretAccessKey.name`         | Name of the Kubernetes secret containing the S3 secret access key                                  | `""`                      |
+| `postgresql.barmanObjectStore.s3Credentials.secretAccessKey.key`          | Key in the secret containing the S3 secret access key                                              | `ACCESS_SECRET_KEY`       |
+| `postgresql.barmanObjectStore.azureCredentials.connectionString.name`     | Name of the Kubernetes secret containing the Azure connection string                               | `""`                      |
+| `postgresql.barmanObjectStore.azureCredentials.connectionString.key`      | Key in the secret containing the Azure connection string                                           | `CONNECTION_STRING`       |
+| `postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.name` | Name of the Kubernetes secret containing the GCS application credentials                           | `""`                      |
+| `postgresql.barmanObjectStore.gcsCredentials.applicationCredentials.key`  | Key in the secret containing the GCS application credentials                                       | `APPLICATION_CREDENTIALS` |
+| `postgresql.extraPlugins`                                                 | Add extra plugins to the CloudNativePG cluster.                                                    | `[]`                      |
+| `postgresql.externalClusters`                                             | Add external clusters to the CloudNativePG cluster to restore a cluster from an object store       | `[]`                      |
+| `externalDatabase.host`                                                   | Database host                                                                                      | `""`                      |
+| `externalDatabase.port`                                                   | Database port number                                                                               | `5432`                    |
+| `externalDatabase.username`                                               | Non-root username for forgejo                                                                      | `forgejo`                 |
+| `externalDatabase.password`                                               | Password for the non-root username for forgejo                                                     | `""`                      |
+| `externalDatabase.database`                                               | forgejo database name                                                                              | `forgejo`                 |
+| `externalDatabase.existingSecret`                                         | Name of an existing secret resource containing the database credentials                            | `""`                      |
+| `externalDatabase.existingSecretPasswordKey`                              | Name of an existing secret key containing the database credentials                                 | `""`                      |
 
 ### SMTP Configuration
 
