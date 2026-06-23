@@ -756,7 +756,7 @@ networkPolicy:
   ## @param networkPolicy.postgresql.enabled Enable NetworkPolicy for PostgreSQL CNPG
   ##
   postgresql:
-    enabled: true
+    enabled: false
     
     ## Ingress rules configuration
     ##
