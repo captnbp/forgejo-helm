@@ -46,6 +46,18 @@ extraDeploy: []
 ## @section Forgejo parameters
 ##
 
+## Diagnostic mode
+## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+## @param diagnosticMode.command Command to override all containers in the chart release
+## @param diagnosticMode.args Args to override all containers in the chart release
+##
+diagnosticMode:
+  enabled: false
+  command:
+    - sleep
+  args:
+    - infinity
+
 ## Bitnami Forgejo image version
 ## ref: https://hub.docker.com/r/bitnami/forgejo/tags/
 ## @param image.registry [default: REGISTRY_NAME] Forgejo image registry
