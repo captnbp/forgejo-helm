@@ -15,4 +15,6 @@ spec:
   cluster:
     name: {{ include "forgejo.postgresql.fullname" . }}
   method: {{ .Values.postgresql.backup.schedule.method | quote }}
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
 {{- end }}
