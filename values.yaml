@@ -70,7 +70,7 @@ diagnosticMode:
 image:
   registry: codeberg.org
   repository: forgejo/forgejo
-  tag: 15.0.4-rootless
+  tag: 15.0.5-rootless
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1122,7 +1122,7 @@ tls:
 auxiliaryImage:
   registry: ghcr.io
   repository: cloudnative-pg/postgresql
-  tag: 18.3-system-trixie
+  tag: 18.4-system-trixie
   digest: ""
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.

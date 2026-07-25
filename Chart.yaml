@@ -4,13 +4,13 @@ annotations:
   artifacthub.io/license: MIT
   artifacthub.io/images: |
     - name: forgejo
-      image: codeberg.org/forgejo/forgejo:15.0.4-rootless
+      image: codeberg.org/forgejo/forgejo:15.0.5-rootless
     - name: os-shell
       image: docker.io/bitnami/os-shell:latest
     - name: postgresql
-      image: ghcr.io/cloudnative-pg/postgresql:18.3-system-trixie
+      image: ghcr.io/cloudnative-pg/postgresql:18.4-system-trixie
 apiVersion: v2
-appVersion: 15.0.4
+appVersion: 15.0.5
 dependencies:
 - name: common
   repository: oci://registry-1.docker.io/bitnamicharts
@@ -18,7 +18,7 @@ dependencies:
   - bitnami-common
   version: 2.x.x
 description: Forgejo is a lightweight code hosting solution. Written in Go, features low resource consumption, easy upgrades and multiple databases.
-home: https://lab.frogg.it/doca/forgejo-helm
+home: https://github.com/captnbp/forgejo-helm
 icon: https://codeberg.org/forgejo/forgejo/raw/branch/forgejo/assets/logo.svg
 keywords:
   - forgejo
@@ -27,6 +27,7 @@ maintainers:
     email: benoit.pourre@gmail.com
     url: https://github.com/captnbp
 sources:
-  - https://lab.frogg.it/doca/forgejo-helm
+  - https://git.doca.cloud/doca/forgejo-helm
+  - https://github.com/captnbp/forgejo-helm
   - https://codeberg.org/forgejo/forgejo
-version: 1.2.1
+version: 1.2.2
