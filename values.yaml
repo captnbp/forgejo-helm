@@ -70,7 +70,7 @@ diagnosticMode:
 image:
   registry: codeberg.org
   repository: forgejo/forgejo
-  tag: 15.0.5-rootless
+  tag: 16.0.1-rootless
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -96,6 +96,12 @@ runMode: prod
 ## @param rootURL UI Root URL (for link generation)
 ##
 rootURL: ""
+## @param enableReverseProxyAuthentication Enable reverse proxy authentication (for reverse proxy setups)
+##
+enableReverseProxyAuthentication: false
+## @param trustedProxies Comma-separated list of trusted proxies (for reverse proxy setups)
+##
+trustedProxies: "10.0.0.0/8"
 ## @param command Override default container command (useful when using custom images)
 ##
 command: []

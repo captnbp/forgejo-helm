@@ -212,6 +212,12 @@ spec:
               value: {{ .Values.containerPorts.http | quote }}
             - name: FORGEJO__server__PROTOCOL
               value: {{ ternary "https" "http" .Values.tls.enabled | quote }}
+            - name: FORGEJO__service__ENABLE_REVERSE_PROXY_AUTHENTICATION
+              value: {{ .Values.enableReverseProxyAuthentication | quote }}
+            {{- if .Values.enableReverseProxyAuthentication }}
+            - name: FORGEJO__security__REVERSE_PROXY_TRUSTED_PROXIES
+              value: {{ .Values.trustedProxies | quote }}
+            {{- end }}
             {{- if .Values.tls.enabled }}
             - name: FORGEJO__server__CERT_FILE
               value: /certs/tls.crt
