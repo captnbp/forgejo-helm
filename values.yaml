@@ -70,7 +70,7 @@ diagnosticMode:
 image:
   registry: codeberg.org
   repository: forgejo/forgejo
-  tag: 16.0.1-rootless
+  tag: 16.0.2-rootless
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
