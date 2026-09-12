@@ -4,13 +4,13 @@ annotations:
   artifacthub.io/license: MIT
   artifacthub.io/images: |
     - name: forgejo
-      image: codeberg.org/forgejo/forgejo:16.0.3-rootless
+      image: codeberg.org/forgejo/forgejo:16.0.4-rootless
     - name: os-shell
       image: docker.io/bitnami/os-shell:latest
     - name: postgresql
       image: ghcr.io/cloudnative-pg/postgresql:18.4-system-trixie
 apiVersion: v2
-appVersion: 16.0.3
+appVersion: 16.0.4
 dependencies:
 - name: common
   repository: oci://registry-1.docker.io/bitnamicharts
@@ -30,4 +30,4 @@ sources:
   - https://git.doca.cloud/doca/forgejo-helm
   - https://github.com/captnbp/forgejo-helm
   - https://codeberg.org/forgejo/forgejo
-version: 1.2.5
+version: 1.2.6
